@@ -50,8 +50,22 @@ jobs:
           NODE_ENV: production
           NEXT_PUBLIC_BASE_PATH: /hush
           
+      - name: Verify build output
+        run: |
+          echo "Build output contents:"
+          ls -la out/
+          echo "Static assets:"
+          ls -la out/_next/static/ || echo "No _next/static directory found"
+          echo "CSS files:"
+          ls -la out/_next/static/css/ || echo "No CSS directory found"
+          echo "JS chunks:"
+          ls -la out/_next/static/chunks/ || echo "No chunks directory found"
+          
       - name: Create .nojekyll file
-        run: touch out/.nojekyll
+        run: |
+          touch out/.nojekyll
+          echo "Created .nojekyll file for GitHub Pages"
+          ls -la out/.nojekyll
         
       - name: Setup Pages
         uses: actions/configure-pages@v4

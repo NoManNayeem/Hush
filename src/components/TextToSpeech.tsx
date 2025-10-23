@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Volume2, VolumeX, Play, Pause, SkipForward, SkipBack } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { ENV } from '@/lib/env'
 
 interface TextToSpeechProps {
   text: string
@@ -68,10 +69,10 @@ export default function TextToSpeech({
     try {
       setTtsState(prev => ({ ...prev, isLoading: true, error: null }))
 
-      const response = await fetch('https://api-inference.huggingface.co/models/onnx-community/Kokoro-82M-v1.0-ONNX-timestamped', {
+      const response = await fetch(ENV.HF_TTS_API, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_HF_TOKEN || 'hf_your_token_here'}`,
+          'Authorization': `Bearer ${ENV.HF_TOKEN}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -112,9 +113,9 @@ export default function TextToSpeech({
   const generateBrowserTTS = async (text: string): Promise<string> => {
     return new Promise((resolve) => {
       const utterance = new SpeechSynthesisUtterance(text)
-      utterance.rate = 0.9
-      utterance.pitch = 1.0
-      utterance.volume = 0.8
+      utterance.rate = ENV.TTS_RATE
+      utterance.pitch = ENV.TTS_PITCH
+      utterance.volume = ENV.TTS_VOLUME
       
       // Use a more natural voice if available
       const voices = speechSynthesis.getVoices()
