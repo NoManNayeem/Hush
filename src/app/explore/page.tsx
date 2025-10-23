@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import ParticleBackground from '@/components/ParticleBackground'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Search, Filter, Clock, User, Tag, Play, BookOpen, Star, Eye } from 'lucide-react'
@@ -76,18 +77,7 @@ export default function ExplorePage() {
       
       {/* Animated Particles */}
       <div className="absolute inset-0">
-        {[...Array(30)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-white/10 rounded-full animate-pulse"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${2 + Math.random() * 3}s`
-            }}
-          />
-        ))}
+        <ParticleBackground count={30} opacity={0.1} />
       </div>
 
       <Navbar />

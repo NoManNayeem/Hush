@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import OnboardingModal from '@/components/OnboardingModal'
+import ParticleBackground from '@/components/ParticleBackground'
 import { Button } from '@/components/ui/button'
 import { checkOnboardingStatus } from '@/lib/storage'
 import { ArrowRight, Sparkles, Play, BookOpen, Search, Zap } from 'lucide-react'
@@ -51,20 +52,9 @@ export default function HomePage() {
       <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-black to-cyan-900/20"></div>
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-black/50 to-black"></div>
       
-      {/* Animated Particles */}
+      {/* Animated Particles - Client-side only */}
       <div className="absolute inset-0">
-        {[...Array(50)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-white/20 rounded-full animate-pulse"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${2 + Math.random() * 3}s`
-            }}
-          />
-        ))}
+        <ParticleBackground />
       </div>
 
       <Navbar />

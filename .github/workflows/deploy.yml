@@ -55,9 +55,6 @@ jobs:
         env:
           NEXT_PUBLIC_BASE_PATH: /hush
           
-      - name: Export static site
-        run: npm run export
-        
       - name: Create .nojekyll file
         run: touch out/.nojekyll
         
