@@ -11,7 +11,7 @@ export const ENV = {
   TTS_VOLUME: parseFloat(process.env.NEXT_PUBLIC_TTS_VOLUME || '0.8'),
   
   // Base Path Configuration
-  BASE_PATH: process.env.NEXT_PUBLIC_BASE_PATH || (process.env.NODE_ENV === 'production' ? '/hush' : ''),
+  BASE_PATH: process.env.NEXT_PUBLIC_BASE_PATH || (process.env.NODE_ENV === 'production' ? '/Hush' : ''),
   
   // API Endpoints
   HF_TTS_API: 'https://api-inference.huggingface.co/models/onnx-community/Kokoro-82M-v1.0-ONNX-timestamped',
@@ -29,16 +29,19 @@ export const ENV = {
 export function validateEnv() {
   const warnings: string[] = []
   
-  if (ENV.HF_TOKEN === 'hf_demo_token_placeholder') {
-    warnings.push('Hugging Face token not configured. TTS will use browser fallback.')
-  }
-  
-  if (ENV.IS_DEVELOPMENT && ENV.BASE_PATH) {
-    warnings.push('Base path detected in development mode. This may cause issues.')
-  }
-  
-  if (warnings.length > 0) {
-    console.warn('Environment Configuration Warnings:', warnings)
+  // Only show warnings in development mode
+  if (ENV.IS_DEVELOPMENT) {
+    if (ENV.HF_TOKEN === 'hf_demo_token_placeholder') {
+      warnings.push('Hugging Face token not configured. TTS will use browser fallback.')
+    }
+    
+    if (ENV.BASE_PATH) {
+      warnings.push('Base path detected in development mode. This may cause issues.')
+    }
+    
+    if (warnings.length > 0) {
+      console.warn('Environment Configuration Warnings:', warnings)
+    }
   }
   
   return warnings

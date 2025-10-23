@@ -68,7 +68,7 @@ export default function Navbar() {
           </Button>
           
           <Link 
-            href="/about" 
+            href="/developer" 
             className="text-white/80 hover:text-white transition-all duration-300 flex items-center space-x-2 group"
             role="menuitem"
             aria-label="About Hush"
@@ -149,7 +149,7 @@ export default function Navbar() {
           </Button>
           
           <Link 
-            href="/about" 
+            href="/developer" 
             className="text-3xl font-bold text-white hover:text-purple-300 transition-colors duration-300 flex items-center space-x-3"
             onClick={() => setIsMenuOpen(false)}
           >

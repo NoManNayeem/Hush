@@ -2,6 +2,7 @@ import React from 'react';
 import { StoryBlock } from '@/lib/storyLoader';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
+import TypingAnimation from './TypingAnimation';
 
 // Dynamically import heavy components
 const MermaidRenderer = dynamic(() => import('./renderers/MermaidRenderer'), { ssr: false });
@@ -11,15 +12,32 @@ const ReactPlayer = dynamic(() => import('react-player/lazy'), { ssr: false });
 
 interface StoryBlockRendererProps {
   block: StoryBlock;
+  enableTyping?: boolean;
+  typingSpeed?: number;
+  onTypingCharacter?: () => void;
 }
 
-export default function StoryBlockRenderer({ block }: StoryBlockRendererProps) {
+export default function StoryBlockRenderer({ 
+  block, 
+  enableTyping = false, 
+  typingSpeed = 50, 
+  onTypingCharacter 
+}: StoryBlockRendererProps) {
   switch (block.type) {
     case 'heading':
       return (
         <div className="my-12 text-center">
           <h2 className="text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400 leading-tight">
-            {block.text}
+            {enableTyping ? (
+              <TypingAnimation 
+                text={block.text || ''} 
+                speed={typingSpeed} 
+                onCharacter={onTypingCharacter}
+                className="text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400"
+              />
+            ) : (
+              block.text
+            )}
           </h2>
         </div>
       );
@@ -27,7 +45,16 @@ export default function StoryBlockRenderer({ block }: StoryBlockRendererProps) {
       return (
         <div className="my-8 text-center">
           <h3 className="text-3xl md:text-4xl font-semibold text-white/90 leading-tight">
-            {block.text}
+            {enableTyping ? (
+              <TypingAnimation 
+                text={block.text || ''} 
+                speed={typingSpeed} 
+                onCharacter={onTypingCharacter}
+                className="text-3xl md:text-4xl font-semibold text-white/90"
+              />
+            ) : (
+              block.text
+            )}
           </h3>
         </div>
       );
@@ -35,7 +62,16 @@ export default function StoryBlockRenderer({ block }: StoryBlockRendererProps) {
       return (
         <div className="my-8 max-w-3xl mx-auto">
           <p className="text-xl leading-relaxed text-white/80 font-light">
-            {block.text}
+            {enableTyping ? (
+              <TypingAnimation 
+                text={block.text || ''} 
+                speed={typingSpeed} 
+                onCharacter={onTypingCharacter}
+                className="text-xl leading-relaxed text-white/80 font-light"
+              />
+            ) : (
+              block.text
+            )}
           </p>
         </div>
       );
