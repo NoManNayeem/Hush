@@ -19,6 +19,8 @@ export default function Storyboard({ story }: StoryboardProps) {
   const [reactions, setReactions] = useState<Record<string, number>>({})
   const [isPlaying, setIsPlaying] = useState(false)
   const [showControls, setShowControls] = useState(true)
+  const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [touchEnd, setTouchEnd] = useState<number | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null)
@@ -124,13 +126,42 @@ export default function Storyboard({ story }: StoryboardProps) {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [currentBlock, story.blocks.length])
 
+  // Touch gesture handlers for mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return
+    
+    const distance = touchStart - touchEnd
+    const isLeftSwipe = distance > 50
+    const isRightSwipe = distance < -50
+
+    if (isLeftSwipe) {
+      navigateBlocks('next')
+    } else if (isRightSwipe) {
+      navigateBlocks('prev')
+    }
+  }
+
   const progressPercentage = ((currentBlock + 1) / story.blocks.length) * 100
 
   return (
-    <div className={cn(
-      "relative min-h-screen bg-black text-white overflow-hidden",
-      isFocusMode ? "overflow-hidden" : ""
-    )}>
+    <div 
+      className={cn(
+        "relative min-h-screen bg-black text-white overflow-hidden",
+        isFocusMode ? "overflow-hidden" : ""
+      )}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* Cinematic Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-purple-900/10 via-black to-cyan-900/10"></div>
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-black/30 to-black"></div>

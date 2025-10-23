@@ -11,6 +11,7 @@ import { Search, Filter, Clock, User, Tag, Play, BookOpen, Star, Eye } from 'luc
 import { cn } from '@/lib/utils'
 import Fuse from 'fuse.js'
 import Image from 'next/image'
+import { FullScreenLoading } from '@/components/LoadingSpinner'
 
 interface Story {
   id: string
@@ -32,19 +33,27 @@ export default function ExplorePage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [allCategories, setAllCategories] = useState<string[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     async function fetchStories() {
-      const res = await fetch('/hush/index.json')
-      const data: Story[] = await res.json()
-      setStories(data)
-      setFilteredStories(data)
+      try {
+        setIsLoading(true)
+        const res = await fetch('/hush/index.json')
+        const data: Story[] = await res.json()
+        setStories(data)
+        setFilteredStories(data)
 
-      const categories = Array.from(new Set(data.flatMap(story => story.categories)))
-      setAllCategories(categories)
-      
-      // Trigger entrance animation
-      setTimeout(() => setIsLoaded(true), 100)
+        const categories = Array.from(new Set(data.flatMap(story => story.categories)))
+        setAllCategories(categories)
+        
+        // Trigger entrance animation
+        setTimeout(() => setIsLoaded(true), 100)
+      } catch (error) {
+        console.error('Failed to load stories:', error)
+      } finally {
+        setIsLoading(false)
+      }
     }
     fetchStories()
   }, [])
@@ -68,6 +77,10 @@ export default function ExplorePage() {
 
     setFilteredStories(currentStories)
   }, [searchTerm, selectedCategory, stories])
+
+  if (isLoading) {
+    return <FullScreenLoading text="Loading stories..." />
+  }
 
   return (
     <div className="min-h-screen bg-black text-white">
