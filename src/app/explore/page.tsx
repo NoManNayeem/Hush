@@ -39,7 +39,9 @@ export default function ExplorePage() {
     async function fetchStories() {
       try {
         setIsLoading(true)
-        const res = await fetch('/hush/index.json')
+        // Use different URLs for development vs production
+        const basePath = process.env.NODE_ENV === 'production' ? '/hush' : ''
+        const res = await fetch(`${basePath}/index.json`)
         const data: Story[] = await res.json()
         setStories(data)
         setFilteredStories(data)

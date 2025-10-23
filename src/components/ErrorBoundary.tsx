@@ -60,7 +60,7 @@ export default class ErrorBoundary extends Component<Props, State> {
               
               <Button
                 variant="outline"
-                onClick={() => window.location.href = '/hush/'}
+                onClick={() => window.location.href = '/'}
                 className="w-full border-white/20 text-white hover:bg-white/10"
               >
                 <Home className="h-4 w-4 mr-2" />
