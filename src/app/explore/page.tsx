@@ -40,7 +40,7 @@ export default function ExplorePage() {
       try {
         setIsLoading(true)
         // Use different URLs for development vs production
-        const basePath = process.env.NODE_ENV === 'production' ? '/hush' : ''
+        const basePath = process.env.NODE_ENV === 'production' ? '/Hush' : ''
         const res = await fetch(`${basePath}/index.json`)
         const data: Story[] = await res.json()
         setStories(data)
