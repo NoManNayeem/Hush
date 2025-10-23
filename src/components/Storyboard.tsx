@@ -68,30 +68,63 @@ export default function Storyboard({ story }: StoryboardProps) {
   }, [currentBlock])
 
   useEffect(() => {
-    // Auto-play functionality
+    // Enhanced auto-play functionality with intelligent timing
     if (isPlaying) {
-      autoPlayRef.current = setInterval(() => {
-        setCurrentBlock(prev => {
-          if (prev < story.blocks.length - 1) {
-            return prev + 1
-          } else {
-            setIsPlaying(false)
-            return prev
-          }
-        })
-      }, 5000) // 5 seconds per block
+      const getBlockReadTime = (block: StoryBlock): number => {
+        // Calculate reading time based on block type and content
+        switch (block.type) {
+          case 'heading':
+          case 'subheading':
+            return 2000 // 2 seconds for headings
+          case 'paragraph':
+            const wordCount = block.text?.split(' ').length || 0
+            return Math.max(3000, wordCount * 200) // 200ms per word, min 3s
+          case 'image':
+            return 4000 // 4 seconds for images
+          case 'video':
+            return 10000 // 10 seconds for videos (user can pause)
+          case 'mermaid':
+          case 'reactflow':
+            return 6000 // 6 seconds for diagrams
+          case 'three-scene':
+            return 8000 // 8 seconds for 3D scenes
+          case 'quote':
+            return 5000 // 5 seconds for quotes
+          case 'code':
+            return 4000 // 4 seconds for code
+          default:
+            return 3000 // Default 3 seconds
+        }
+      }
+
+      const scheduleNextBlock = () => {
+        if (currentBlock < story.blocks.length - 1) {
+          const nextBlock = story.blocks[currentBlock + 1]
+          const readTime = getBlockReadTime(nextBlock)
+          
+          autoPlayRef.current = setTimeout(() => {
+            setCurrentBlock(prev => prev + 1)
+            scheduleNextBlock() // Schedule the next block
+          }, readTime)
+        } else {
+          // Story finished
+          setIsPlaying(false)
+        }
+      }
+
+      scheduleNextBlock()
     } else {
       if (autoPlayRef.current) {
-        clearInterval(autoPlayRef.current)
+        clearTimeout(autoPlayRef.current)
       }
     }
 
     return () => {
       if (autoPlayRef.current) {
-        clearInterval(autoPlayRef.current)
+        clearTimeout(autoPlayRef.current)
       }
     }
-  }, [isPlaying, story.blocks.length])
+  }, [isPlaying, currentBlock, story.blocks])
 
   const navigateBlocks = (direction: 'next' | 'prev') => {
     if (direction === 'next' && currentBlock < story.blocks.length - 1) {
@@ -212,6 +245,19 @@ export default function Storyboard({ story }: StoryboardProps) {
                 showCount={false}
               />
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Auto-play Indicator */}
+      {isPlaying && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-40 bg-purple-500/10 border border-purple-500/20 rounded-lg px-4 py-2 backdrop-blur-sm">
+          <div className="flex items-center space-x-2 text-purple-300">
+            <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+            <span className="text-sm font-medium">Auto-playing</span>
+            <span className="text-xs text-purple-400">
+              {Math.ceil((story.blocks.length - currentBlock - 1) * 3)}s remaining
+            </span>
           </div>
         </div>
       )}
