@@ -1,0 +1,60 @@
+name: Deploy Hush to GitHub Pages
+
+on:
+  push:
+    paths:
+      - 'stories/**'
+      - 'content/**'
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'next.config.js'
+      - 'tailwind.config.ts'
+      - 'tsconfig.json'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+        
+      - name: Generate story index
+        run: npm run gen:index
+        
+      - name: Generate sitemap
+        run: npm run gen:sitemap
+        
+      - name: Build Next.js app
+        run: npm run build
+        
+      - name: Export static site
+        run: npm run export
+        
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./out
+          cname: # Optional: add custom domain here
+          
+      - name: Create .nojekyll file
+        run: touch out/.nojekyll
+        
+      - name: Upload .nojekyll to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./out
+          keep_files: true
