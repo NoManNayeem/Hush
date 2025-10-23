@@ -9,8 +9,9 @@ import SearchBar from './SearchBar'
 import ReactionButton from './ReactionButton'
 import BookmarkButton from './BookmarkButton'
 import FocusToggle from './FocusToggle'
+import TextToSpeech, { useStoryTTS } from './TextToSpeech'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, ArrowRight, X, Play, Pause } from 'lucide-react'
+import { ArrowLeft, ArrowRight, X, Play, Pause, Volume2, VolumeX } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface StoryboardProps {
@@ -26,9 +27,13 @@ export default function Storyboard({ story }: StoryboardProps) {
   const [showControls, setShowControls] = useState(true)
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
+  const [isTTSEnabled, setIsTTSEnabled] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null)
+  
+  // TTS hook
+  const { isEnabled: ttsEnabled, toggleTTS, setCurrentBlockTTS } = useStoryTTS(story.id)
 
   useEffect(() => {
     // Load reading progress
@@ -157,6 +162,9 @@ export default function Storyboard({ story }: StoryboardProps) {
       } else if (event.key === 'p' || event.key === 'P') {
         event.preventDefault()
         toggleAutoPlay()
+      } else if (event.key === 't' || event.key === 'T') {
+        event.preventDefault()
+        toggleTTS()
       }
     }
 
@@ -190,6 +198,29 @@ export default function Storyboard({ story }: StoryboardProps) {
 
   const progressPercentage = ((currentBlock + 1) / story.blocks.length) * 100
 
+  // Helper function to extract text from blocks for TTS
+  const getBlockText = (block: StoryBlock): string => {
+    switch (block.type) {
+      case 'heading':
+      case 'subheading':
+      case 'paragraph':
+      case 'quote':
+        return block.text || ''
+      case 'code':
+        return block.code || ''
+      case 'image':
+      case 'video':
+      case 'embed':
+        return block.caption || ''
+      case 'mermaid':
+      case 'reactflow':
+      case 'three-scene':
+        return block.caption || ''
+      default:
+        return ''
+    }
+  }
+
   return (
     <div 
       className={cn(
@@ -221,6 +252,18 @@ export default function Storyboard({ story }: StoryboardProps) {
             <div className="flex items-center space-x-2">
               <Button variant="ghost" size="icon" onClick={toggleAutoPlay} className="text-white hover:bg-white/10">
                 {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleTTS}
+                className={cn(
+                  "text-white hover:bg-white/10 transition-colors",
+                  ttsEnabled ? "text-purple-400" : "text-white/60"
+                )}
+                aria-label={ttsEnabled ? 'Disable text-to-speech' : 'Enable text-to-speech'}
+              >
+                {ttsEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
               </Button>
               <FocusToggle
                 isFocusMode={isFocusMode}
@@ -281,6 +324,18 @@ export default function Storyboard({ story }: StoryboardProps) {
               )}
             >
               <StoryBlockRenderer block={block} />
+              
+              {/* TTS for current block */}
+              {index === currentBlock && ttsEnabled && (
+                <div className="mt-4 flex justify-center">
+                  <TextToSpeech
+                    text={getBlockText(block)}
+                    storyId={story.id}
+                    blockIndex={index}
+                    autoPlay={isPlaying}
+                  />
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -357,6 +412,7 @@ export default function Storyboard({ story }: StoryboardProps) {
             <div>Space Next</div>
             <div>F Focus Mode</div>
             <div>P Auto-play</div>
+            <div>T Text-to-Speech</div>
           </div>
         </div>
       )}
