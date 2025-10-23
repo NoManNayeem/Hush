@@ -179,7 +179,15 @@ export default function UtilityPanel({
 
                 {/* Autoplay Controls */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-white">Auto-play</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-white">Auto-play</h3>
+                    {autoplayMode !== 'disabled' && (
+                      <div className="flex items-center space-x-1 text-xs text-green-400">
+                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                        <span>Auto-scroll</span>
+                      </div>
+                    )}
+                  </div>
                   <div className="grid grid-cols-2 gap-2">
                     {autoplayOptions.map((option) => {
                       const Icon = option.icon
@@ -202,6 +210,18 @@ export default function UtilityPanel({
                       )
                     })}
                   </div>
+                  {autoplayMode !== 'disabled' && (
+                    <div className="text-xs text-gray-400 bg-white/5 rounded p-2">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                        <span>Screen auto-scrolls to keep content centered</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                        <span>Timing adjusts based on content type</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* TTS Controls */}

@@ -73,18 +73,46 @@ export default function Storyboard({ story }: StoryboardProps) {
     }
   }, [])
 
-  // Auto-scroll to current block
+  // Enhanced auto-scroll to current block with autoplay support
   useEffect(() => {
     if (containerRef.current) {
       const currentBlockElement = containerRef.current.querySelector(`[data-block-index="${currentBlock}"]`)
       if (currentBlockElement) {
-        currentBlockElement.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'center' 
-        })
+        // Different scroll behavior based on autoplay mode
+        const scrollOptions = autoplayMode !== 'disabled' 
+          ? { 
+              behavior: 'smooth', 
+              block: 'center',
+              inline: 'center'
+            }
+          : { 
+              behavior: 'smooth', 
+              block: 'center' 
+            }
+        
+        currentBlockElement.scrollIntoView(scrollOptions)
+        
+        // For autoplay, also ensure the element is fully visible
+        if (autoplayMode !== 'disabled') {
+          setTimeout(() => {
+            const rect = currentBlockElement.getBoundingClientRect()
+            const viewportHeight = window.innerHeight
+            const elementCenter = rect.top + rect.height / 2
+            const viewportCenter = viewportHeight / 2
+            
+            // If element is not centered, adjust scroll
+            if (Math.abs(elementCenter - viewportCenter) > 50) {
+              currentBlockElement.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center',
+                inline: 'center'
+              })
+            }
+          }, 100)
+        }
       }
     }
-  }, [currentBlock])
+  }, [currentBlock, autoplayMode])
 
   useEffect(() => {
     // Check if user has seen story onboarding
@@ -181,7 +209,7 @@ export default function Storyboard({ story }: StoryboardProps) {
           const nextBlock = story.blocks[currentBlock + 1]
           const readTime = getBlockReadTime(nextBlock)
           
-          // Update progress
+          // Update progress and handle auto-scroll
           setAutoplayProgress(0)
           const progressInterval = setInterval(() => {
             setAutoplayProgress(prev => {
@@ -189,9 +217,32 @@ export default function Storyboard({ story }: StoryboardProps) {
               return newProgress >= 100 ? 100 : newProgress
             })
           }, 100)
+
+          // Auto-scroll during autoplay with smooth timing
+          const scrollInterval = setInterval(() => {
+            if (containerRef.current) {
+              const currentBlockElement = containerRef.current.querySelector(`[data-block-index="${currentBlock}"]`)
+              if (currentBlockElement) {
+                const rect = currentBlockElement.getBoundingClientRect()
+                const viewportHeight = window.innerHeight
+                const elementCenter = rect.top + rect.height / 2
+                const viewportCenter = viewportHeight / 2
+                
+                // Only scroll if element is not well-centered
+                if (Math.abs(elementCenter - viewportCenter) > 100) {
+                  currentBlockElement.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center',
+                    inline: 'center'
+                  })
+                }
+              }
+            }
+          }, 500) // Check every 500ms during autoplay
           
           autoPlayRef.current = setTimeout(() => {
             clearInterval(progressInterval)
+            clearInterval(scrollInterval)
             setCurrentBlock(prev => prev + 1)
             scheduleNextBlock()
           }, readTime)

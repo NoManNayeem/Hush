@@ -74,9 +74,13 @@ export default function StoryOnboarding({ isOpen, onComplete, onSkip }: StoryOnb
               <Zap className="h-5 w-5 text-yellow-400" />
               <span className="text-sm font-semibold text-white">Auto-play</span>
             </div>
-            <p className="text-xs text-gray-300">
+            <p className="text-xs text-gray-300 mb-2">
               Choose from Slow & Thoughtful, Normal Pace, or Quick Read modes
             </p>
+            <div className="flex items-center space-x-2 text-xs text-purple-400">
+              <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+              <span>Screen auto-scrolls to keep content centered</span>
+            </div>
           </div>
         </div>
       ),
