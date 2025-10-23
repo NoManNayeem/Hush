@@ -2,6 +2,7 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { Button } from '@/components/ui/button'
 import { Github, ExternalLink, Heart, Code, BookOpen } from 'lucide-react'
+import Image from 'next/image'
 
 export default function DeveloperPage() {
   return (
@@ -29,8 +30,14 @@ export default function DeveloperPage() {
           </h2>
           
           <div className="flex flex-col md:flex-row items-start space-y-4 md:space-y-0 md:space-x-6">
-            <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold text-2xl">
-              NI
+            <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-primary/20 shadow-lg">
+              <Image
+                src="https://avatars.githubusercontent.com/u/60138887?v=4"
+                alt="Nayeem Islam (NoManNayeem)"
+                width={80}
+                height={80}
+                className="w-full h-full object-cover"
+              />
             </div>
             
             <div className="flex-1">
