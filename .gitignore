@@ -111,3 +111,12 @@ temp/
 # Local development
 .qodo/
 project_idea/
+
+# Performance reports
+lighthouse-report.json
+*.lighthouse.html
+
+# Build artifacts
+*.plan.md
+debug-*
+test-*

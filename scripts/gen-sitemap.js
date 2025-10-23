@@ -26,7 +26,7 @@ function generateSitemap() {
   }
   
   // Base URL for the site (adjust for GitHub Pages)
-  const baseUrl = 'https://nomannayeem.github.io/hush'
+  const baseUrl = 'https://nomannayeem.github.io/Hush'
   
   // Generate sitemap XML
   let sitemap = `<?xml version="1.0" encoding="UTF-8"?>

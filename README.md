@@ -25,8 +25,8 @@ Hush is an open-source, immersive storytelling platform that transforms traditio
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/NoManNayeem/hush.git
-   cd hush
+   git clone https://github.com/NoManNayeem/Hush.git
+   cd Hush
    ```
 
 2. **Install dependencies**
@@ -60,7 +60,7 @@ Hush is optimized for GitHub Pages deployment with automatic CI/CD:
 2. **Automatic Deployment**
    - Push to `main` branch triggers deployment
    - Workflow builds and deploys automatically
-   - Available at `https://yourusername.github.io/hush`
+   - Available at `https://yourusername.github.io/Hush`
 
 3. **Manual Deployment**
    - Go to Actions tab → "Deploy Hush to GitHub Pages"
@@ -151,7 +151,7 @@ Hush supports various block types for rich storytelling:
 ### Project Structure
 
 ```
-hush/
+Hush/
 ├── src/
 │   ├── app/                 # Next.js App Router pages
 │   ├── components/          # React components
@@ -218,7 +218,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Nayeem Islam (NoManNayeem)**
 - GitHub: [@NoManNayeem](https://github.com/NoManNayeem)
-- Project: [Hush Repository](https://github.com/NoManNayeem/hush)
+- Project: [Hush Repository](https://github.com/NoManNayeem/Hush)
 
 ## ⚠️ Disclaimer
 

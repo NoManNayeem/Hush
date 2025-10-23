@@ -68,7 +68,7 @@ export default function DeveloperPage() {
                   asChild
                   className="flex items-center space-x-2"
                 >
-                  <a href="https://github.com/NoManNayeem/hush" target="_blank" rel="noopener noreferrer">
+                  <a href="https://github.com/NoManNayeem/Hush" target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="h-4 w-4" />
                     <span>Hush Repository</span>
                   </a>
@@ -153,14 +153,14 @@ export default function DeveloperPage() {
 
           <div className="mt-6 flex flex-wrap gap-3">
             <Button asChild>
-              <a href="https://github.com/NoManNayeem/hush" target="_blank" rel="noopener noreferrer">
+              <a href="https://github.com/NoManNayeem/Hush" target="_blank" rel="noopener noreferrer">
                 <Github className="h-4 w-4 mr-2" />
                 View on GitHub
               </a>
             </Button>
             
             <Button variant="outline" asChild>
-              <a href="https://github.com/NoManNayeem/hush/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer">
+              <a href="https://github.com/NoManNayeem/Hush/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer">
                 <BookOpen className="h-4 w-4 mr-2" />
                 Contributing Guide
               </a>
