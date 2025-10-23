@@ -4,15 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'stories/**'
-      - 'src/**'
-      - 'public/**'
-      - 'package.json'
-      - 'next.config.js'
-      - 'tailwind.config.ts'
-      - 'tsconfig.json'
-      - '.github/workflows/**'
   workflow_dispatch:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
