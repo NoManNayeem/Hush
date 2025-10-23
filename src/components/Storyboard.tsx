@@ -5,8 +5,12 @@ import { Story, StoryBlock } from '@/lib/storyLoader'
 import { saveReadingProgress, loadReadingProgress } from '@/lib/storage'
 import StoryBlockRenderer from './StoryBlockRenderer'
 import ParticleBackground from './ParticleBackground'
+import SearchBar from './SearchBar'
+import ReactionButton from './ReactionButton'
+import BookmarkButton from './BookmarkButton'
+import FocusToggle from './FocusToggle'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, ArrowRight, Focus, Bookmark, Heart, Eye, Zap, MessageCircle, X, Play, Pause } from 'lucide-react'
+import { ArrowLeft, ArrowRight, X, Play, Pause } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface StoryboardProps {
@@ -181,19 +185,32 @@ export default function Storyboard({ story }: StoryboardProps) {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <h1 className="text-lg font-bold text-white truncate max-w-md">{story.title}</h1>
-            <div className="flex space-x-2">
+            <div className="flex items-center space-x-2">
               <Button variant="ghost" size="icon" onClick={toggleAutoPlay} className="text-white hover:bg-white/10">
                 {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
               </Button>
-              <Button variant="ghost" size="icon" onClick={toggleFocusMode} className="text-white hover:bg-white/10">
-                <Focus className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
-                <Bookmark className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
-                <Heart className="h-5 w-5" />
-              </Button>
+              <FocusToggle
+                isFocusMode={isFocusMode}
+                onToggle={setIsFocusMode}
+                size="sm"
+              />
+              <BookmarkButton
+                story={{
+                  id: story.id,
+                  title: story.title,
+                  slug: story.id,
+                  coverImage: story.coverImage,
+                  author: story.author,
+                  readingTime: story.readingTime
+                }}
+                size="sm"
+              />
+              <ReactionButton
+                storyId={story.id}
+                reactionType="liked"
+                size="sm"
+                showCount={false}
+              />
             </div>
           </div>
         </div>

@@ -70,14 +70,42 @@ export default function StoryBlockRenderer({ block }: StoryBlockRendererProps) {
           {block.src && (
             <div className="relative group">
               <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-cyan-500/20 rounded-lg blur-xl group-hover:blur-2xl transition-all duration-500"></div>
-              <div className="relative aspect-video w-full rounded-lg overflow-hidden shadow-2xl">
+              <div className="relative aspect-video w-full rounded-lg overflow-hidden shadow-2xl border border-white/10">
                 <ReactPlayer
                   url={block.src}
                   controls
                   width="100%"
                   height="100%"
                   className="rounded-lg"
+                  config={{
+                    youtube: {
+                      playerVars: {
+                        modestbranding: 1,
+                        rel: 0,
+                        showinfo: 0
+                      }
+                    },
+                    vimeo: {
+                      playerOptions: {
+                        responsive: true,
+                        autopause: true
+                      }
+                    }
+                  }}
+                  light={
+                    <div className="flex items-center justify-center h-full bg-gradient-to-br from-purple-900/20 to-cyan-900/20">
+                      <div className="text-center">
+                        <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z"/>
+                          </svg>
+                        </div>
+                        <p className="text-white/80 text-sm">Click to play video</p>
+                      </div>
+                    </div>
+                  }
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
               </div>
               {block.caption && (
                 <p className="text-sm text-white/60 mt-4 text-center italic">
@@ -143,14 +171,21 @@ export default function StoryBlockRenderer({ block }: StoryBlockRendererProps) {
         <div className="my-12">
           <div className="relative group">
             <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-cyan-500/20 rounded-lg blur-xl group-hover:blur-2xl transition-all duration-500"></div>
-            <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-2xl border border-white/10">
+            <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-2xl border border-white/10 bg-black/20">
               {block.src && (
-                <iframe
-                  src={block.src}
-                  title={block.caption || 'Embedded content'}
-                  className="w-full h-full"
-                  sandbox="allow-scripts allow-same-origin allow-popups"
-                />
+                <>
+                  <iframe
+                    src={block.src}
+                    title={block.caption || 'Embedded content'}
+                    className="w-full h-full"
+                    sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                  <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded backdrop-blur-sm">
+                    External Content
+                  </div>
+                </>
               )}
             </div>
             {block.caption && (
@@ -182,10 +217,37 @@ export default function StoryBlockRenderer({ block }: StoryBlockRendererProps) {
         <div className="my-12">
           <div className="relative group">
             <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-cyan-500/20 rounded-lg blur-xl group-hover:blur-2xl transition-all duration-500"></div>
-            <div className="relative bg-gray-900/90 backdrop-blur-sm p-6 rounded-lg shadow-2xl border border-white/10 overflow-auto">
-              <pre className="text-green-400 text-sm leading-relaxed">
-                <code>{block.code}</code>
-              </pre>
+            <div className="relative bg-gray-900/95 backdrop-blur-sm rounded-lg shadow-2xl border border-white/10 overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 py-2 bg-gray-800/50 border-b border-white/10">
+                <div className="flex items-center space-x-2">
+                  <div className="flex space-x-1">
+                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  </div>
+                  <span className="text-xs text-gray-400 ml-2">
+                    {block.language || 'code'}
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    if (block.code) {
+                      navigator.clipboard.writeText(block.code)
+                    }
+                  }}
+                  className="text-xs text-gray-400 hover:text-white transition-colors px-2 py-1 rounded hover:bg-white/5"
+                >
+                  Copy
+                </button>
+              </div>
+              
+              {/* Code content */}
+              <div className="p-6 overflow-auto max-h-96">
+                <pre className="text-green-400 text-sm leading-relaxed font-mono">
+                  <code>{block.code}</code>
+                </pre>
+              </div>
             </div>
           </div>
         </div>
