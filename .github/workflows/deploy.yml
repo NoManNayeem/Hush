@@ -48,7 +48,7 @@ jobs:
         run: npm run build
         env:
           NODE_ENV: production
-          NEXT_PUBLIC_BASE_PATH: /hush
+          NEXT_PUBLIC_BASE_PATH: /Hush
           
       - name: Verify build output
         run: |

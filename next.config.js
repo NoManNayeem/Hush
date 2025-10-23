@@ -9,8 +9,8 @@ const nextConfig = {
     unoptimized: true,
   },
   // Always use basePath for GitHub Pages deployment
-  basePath: '/hush',
-  assetPrefix: '/hush/',
+  basePath: '/Hush',
+  assetPrefix: '/Hush/',
   // Add webpack configuration to fix module resolution issues
   webpack: (config, { isServer }) => {
     if (!isServer) {
