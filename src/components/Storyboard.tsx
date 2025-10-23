@@ -5,7 +5,7 @@ import { Story, StoryBlock } from '@/lib/storyLoader'
 import { saveReadingProgress, loadReadingProgress } from '@/lib/storage'
 import StoryBlockRenderer from './StoryBlockRenderer'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, ArrowRight, Focus, Bookmark, Heart, Eye, Zap, MessageCircle } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Focus, Bookmark, Heart, Eye, Zap, MessageCircle, X, Play, Pause } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface StoryboardProps {
@@ -17,213 +17,267 @@ export default function Storyboard({ story }: StoryboardProps) {
   const [isFocusMode, setIsFocusMode] = useState(false)
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [reactions, setReactions] = useState<Record<string, number>>({})
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [showControls, setShowControls] = useState(true)
   const containerRef = useRef<HTMLDivElement>(null)
+  const progressRef = useRef<HTMLDivElement>(null)
+  const autoPlayRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Load saved progress on mount
   useEffect(() => {
+    // Load reading progress
     const loadProgress = async () => {
       const progress = await loadReadingProgress(story.id)
       if (progress) {
         setCurrentBlock(progress.blockIndex)
-        if (containerRef.current) {
-          containerRef.current.scrollTop = progress.scroll
-        }
       }
     }
     loadProgress()
   }, [story.id])
 
-  // Save progress on block change
   useEffect(() => {
+    // Save reading progress
     const saveProgress = async () => {
       await saveReadingProgress({
         storyId: story.id,
         blockIndex: currentBlock,
-        scroll: containerRef.current?.scrollTop || 0,
+        scroll: 0,
         timestamp: new Date().toISOString()
       })
     }
     saveProgress()
-  }, [currentBlock, story.id])
+  }, [story.id, currentBlock])
 
-  const handlePrevious = () => {
-    if (currentBlock > 0) {
+  useEffect(() => {
+    // Auto-hide controls
+    let hideTimeout: NodeJS.Timeout
+    const resetTimeout = () => {
+      clearTimeout(hideTimeout)
+      setShowControls(true)
+      hideTimeout = setTimeout(() => setShowControls(false), 3000)
+    }
+
+    resetTimeout()
+    return () => clearTimeout(hideTimeout)
+  }, [currentBlock])
+
+  useEffect(() => {
+    // Auto-play functionality
+    if (isPlaying) {
+      autoPlayRef.current = setInterval(() => {
+        setCurrentBlock(prev => {
+          if (prev < story.blocks.length - 1) {
+            return prev + 1
+          } else {
+            setIsPlaying(false)
+            return prev
+          }
+        })
+      }, 5000) // 5 seconds per block
+    } else {
+      if (autoPlayRef.current) {
+        clearInterval(autoPlayRef.current)
+      }
+    }
+
+    return () => {
+      if (autoPlayRef.current) {
+        clearInterval(autoPlayRef.current)
+      }
+    }
+  }, [isPlaying, story.blocks.length])
+
+  const navigateBlocks = (direction: 'next' | 'prev') => {
+    if (direction === 'next' && currentBlock < story.blocks.length - 1) {
+      setCurrentBlock(currentBlock + 1)
+    } else if (direction === 'prev' && currentBlock > 0) {
       setCurrentBlock(currentBlock - 1)
     }
   }
-
-  const handleNext = () => {
-    if (currentBlock < story.blocks.length - 1) {
-      setCurrentBlock(currentBlock + 1)
-    }
-  }
-
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'ArrowLeft') {
-      handlePrevious()
-    } else if (e.key === 'ArrowRight') {
-      handleNext()
-    } else if (e.key === 'Escape') {
-      setIsFocusMode(false)
-    }
-  }
-
-  useEffect(() => {
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [currentBlock])
 
   const toggleFocusMode = () => {
     setIsFocusMode(!isFocusMode)
   }
 
-  const addReaction = (emoji: string) => {
-    setReactions(prev => ({
-      ...prev,
-      [emoji]: (prev[emoji] || 0) + 1
-    }))
+  const toggleAutoPlay = () => {
+    setIsPlaying(!isPlaying)
   }
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowRight' || event.key === ' ') {
+        event.preventDefault()
+        navigateBlocks('next')
+      } else if (event.key === 'ArrowLeft') {
+        event.preventDefault()
+        navigateBlocks('prev')
+      } else if (event.key === 'f' || event.key === 'F') {
+        event.preventDefault()
+        toggleFocusMode()
+      } else if (event.key === 'p' || event.key === 'P') {
+        event.preventDefault()
+        toggleAutoPlay()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [currentBlock, story.blocks.length])
 
   const progressPercentage = ((currentBlock + 1) / story.blocks.length) * 100
 
   return (
     <div className={cn(
-      "min-h-screen bg-background transition-all duration-300",
-      isFocusMode && "focus-mode"
+      "relative min-h-screen bg-black text-white overflow-hidden",
+      isFocusMode ? "overflow-hidden" : ""
     )}>
-      {/* Progress Bar */}
-      <div className="fixed top-0 left-0 right-0 z-40 h-1 bg-muted">
-        <div 
-          className="h-full bg-gradient-to-r from-purple-500 to-cyan-500 transition-all duration-300"
-          style={{ width: `${progressPercentage}%` }}
-        />
-      </div>
-
-      {/* Main Content */}
-      <div 
-        ref={containerRef}
-        className="container mx-auto px-4 py-8 max-w-4xl"
-      >
-        {/* Story Header */}
-        <div className="mb-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-            {story.title}
-          </h1>
-          <div className="flex items-center justify-center space-x-4 text-muted-foreground">
-            <span>by {story.author}</span>
-            <span>•</span>
-            <span>{story.readingTime}</span>
-            <span>•</span>
-            <span>{story.categories.join(', ')}</span>
-          </div>
-        </div>
-
-        {/* Current Block */}
-        <div className="mb-8">
-          <StoryBlockRenderer 
-            block={story.blocks[currentBlock]} 
-            index={currentBlock}
+      {/* Cinematic Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-900/10 via-black to-cyan-900/10"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-black/30 to-black"></div>
+      
+      {/* Animated Particles */}
+      <div className="absolute inset-0">
+        {[...Array(20)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-1 h-1 bg-white/10 rounded-full animate-pulse"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 3}s`,
+              animationDuration: `${2 + Math.random() * 3}s`
+            }}
           />
-        </div>
+        ))}
+      </div>
 
-        {/* Navigation */}
-        <div className="flex items-center justify-between mb-8">
-          <Button
-            variant="outline"
-            onClick={handlePrevious}
-            disabled={currentBlock === 0}
-            className="flex items-center space-x-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Previous</span>
-          </Button>
-
-          <div className="text-center">
-            <span className="text-sm text-muted-foreground">
-              {currentBlock + 1} of {story.blocks.length}
-            </span>
+      {/* Top Navigation */}
+      {!isFocusMode && (
+        <div className={cn(
+          "fixed top-0 left-0 right-0 z-50 p-4 bg-black/80 backdrop-blur-sm border-b border-white/10 transition-all duration-300",
+          showControls ? "translate-y-0" : "-translate-y-full"
+        )}>
+          <div className="container mx-auto flex justify-between items-center">
+            <Button variant="ghost" size="icon" onClick={() => window.history.back()} className="text-white hover:bg-white/10">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-lg font-bold text-white truncate max-w-md">{story.title}</h1>
+            <div className="flex space-x-2">
+              <Button variant="ghost" size="icon" onClick={toggleAutoPlay} className="text-white hover:bg-white/10">
+                {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+              </Button>
+              <Button variant="ghost" size="icon" onClick={toggleFocusMode} className="text-white hover:bg-white/10">
+                <Focus className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+                <Bookmark className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+                <Heart className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
-
-          <Button
-            variant="outline"
-            onClick={handleNext}
-            disabled={currentBlock === story.blocks.length - 1}
-            className="flex items-center space-x-2"
-          >
-            <span>Next</span>
-            <ArrowRight className="h-4 w-4" />
-          </Button>
         </div>
+      )}
 
-        {/* Actions */}
-        <div className="flex items-center justify-center space-x-4 mb-8">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleFocusMode}
-            className="flex items-center space-x-2"
-          >
-            <Focus className="h-4 w-4" />
-            <span>{isFocusMode ? 'Exit Focus' : 'Focus Mode'}</span>
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsBookmarked(!isBookmarked)}
-            className={cn(
-              "flex items-center space-x-2",
-              isBookmarked && "text-yellow-500"
-            )}
-          >
-            <Bookmark className="h-4 w-4" />
-            <span>{isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
-          </Button>
-        </div>
-
-        {/* Reactions */}
-        <div className="flex items-center justify-center space-x-4 mb-8">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => addReaction('❤️')}
-            className="flex items-center space-x-2"
-          >
-            <Heart className="h-4 w-4" />
-            <span>{reactions['❤️'] || 0}</span>
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => addReaction('👁️')}
-            className="flex items-center space-x-2"
-          >
-            <Eye className="h-4 w-4" />
-            <span>{reactions['👁️'] || 0}</span>
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => addReaction('😱')}
-            className="flex items-center space-x-2"
-          >
-            <Zap className="h-4 w-4" />
-            <span>{reactions['😱'] || 0}</span>
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => addReaction('💭')}
-            className="flex items-center space-x-2"
-          >
-            <MessageCircle className="h-4 w-4" />
-            <span>{reactions['💭'] || 0}</span>
-          </Button>
+      {/* Story Content */}
+      <div className={cn(
+        "container mx-auto py-16 px-4",
+        isFocusMode ? "pt-4 pb-4" : "pt-24 pb-24"
+      )}>
+        <div className="max-w-4xl mx-auto">
+          {story.blocks.map((block, index) => (
+            <div
+              key={index}
+              className={cn(
+                "story-block transition-all duration-1000 ease-out",
+                index === currentBlock 
+                  ? "opacity-100 transform translate-y-0 scale-100" 
+                  : index < currentBlock 
+                    ? "opacity-30 transform -translate-y-4 scale-95" 
+                    : "opacity-0 transform translate-y-8 scale-95"
+              )}
+            >
+              <StoryBlockRenderer block={block} />
+            </div>
+          ))}
         </div>
       </div>
+
+      {/* Bottom Controls */}
+      {!isFocusMode && (
+        <div className={cn(
+          "fixed bottom-0 left-0 right-0 z-50 p-4 bg-black/80 backdrop-blur-sm border-t border-white/10 transition-all duration-300",
+          showControls ? "translate-y-0" : "translate-y-full"
+        )}>
+          <div className="container mx-auto">
+            {/* Progress Bar */}
+            <div className="w-full bg-white/10 rounded-full h-2 mb-4">
+              <div
+                ref={progressRef}
+                className="bg-gradient-to-r from-purple-500 to-cyan-500 h-2 rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${progressPercentage}%` }}
+              />
+            </div>
+            
+            {/* Navigation Controls */}
+            <div className="flex justify-between items-center">
+              <Button 
+                variant="ghost" 
+                onClick={() => navigateBlocks('prev')} 
+                disabled={currentBlock === 0}
+                className="text-white hover:bg-white/10 disabled:opacity-50"
+              >
+                <ArrowLeft className="h-5 w-5 mr-2" /> Previous
+              </Button>
+              
+              <div className="text-center">
+                <div className="text-sm text-white/70 mb-1">
+                  {currentBlock + 1} of {story.blocks.length}
+                </div>
+                <div className="text-xs text-white/50">
+                  {Math.round(progressPercentage)}% complete
+                </div>
+              </div>
+              
+              <Button 
+                variant="ghost" 
+                onClick={() => navigateBlocks('next')} 
+                disabled={currentBlock === story.blocks.length - 1}
+                className="text-white hover:bg-white/10 disabled:opacity-50"
+              >
+                Next <ArrowRight className="h-5 w-5 ml-2" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Focus Mode Exit */}
+      {isFocusMode && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <Button 
+            variant="secondary" 
+            size="icon" 
+            onClick={toggleFocusMode}
+            className="bg-white/10 hover:bg-white/20 text-white border border-white/20"
+          >
+            <X className="h-6 w-6" />
+          </Button>
+        </div>
+      )}
+
+      {/* Keyboard Shortcuts Hint */}
+      {!isFocusMode && showControls && (
+        <div className="fixed bottom-20 right-4 z-40 bg-black/80 backdrop-blur-sm border border-white/10 rounded-lg p-3 text-xs text-white/70">
+          <div className="space-y-1">
+            <div>← → Navigate</div>
+            <div>Space Next</div>
+            <div>F Focus Mode</div>
+            <div>P Auto-play</div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

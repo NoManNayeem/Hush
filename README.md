@@ -18,7 +18,7 @@ Hush is an open-source, immersive storytelling platform that transforms traditio
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 20+ 
 - npm or yarn
 
 ### Installation
@@ -31,7 +31,7 @@ Hush is an open-source, immersive storytelling platform that transforms traditio
 
 2. **Install dependencies**
    ```bash
-   npm install --legacy-peer-deps
+   npm install
    ```
 
 3. **Generate story index**
@@ -46,6 +46,53 @@ Hush is an open-source, immersive storytelling platform that transforms traditio
 
 5. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
+
+## 🚀 Deployment
+
+### GitHub Pages (Recommended)
+
+Hush is optimized for GitHub Pages deployment with automatic CI/CD:
+
+1. **Enable GitHub Pages**
+   - Go to repository Settings → Pages
+   - Set Source to "GitHub Actions"
+
+2. **Automatic Deployment**
+   - Push to `main` branch triggers deployment
+   - Workflow builds and deploys automatically
+   - Available at `https://yourusername.github.io/hush`
+
+3. **Manual Deployment**
+   - Go to Actions tab → "Deploy Hush to GitHub Pages"
+   - Click "Run workflow"
+
+For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md).
+
+### Other Platforms
+
+- **Vercel**: `vercel --prod`
+- **Netlify**: Connect repository for automatic builds
+- **Static Hosting**: Use `npm run build` and deploy `out/` folder
+
+## 🎬 Features
+
+### Cinematic Storytelling
+- **Immersive Storyboards**: Stories unfold with smooth animations and transitions
+- **Focus Mode**: Distraction-free reading experience
+- **Auto-play**: Hands-free story progression
+- **Keyboard Navigation**: Arrow keys, space bar, and shortcuts
+
+### Interactive Elements
+- **Multiple Block Types**: Text, images, videos, Mermaid diagrams, ReactFlow networks, 3D scenes
+- **Bookmarks & Reactions**: Save favorites and react with emojis
+- **Reading Progress**: Automatic save and restore
+- **Search & Discovery**: Find stories by keywords, categories, or authors
+
+### Technical Excellence
+- **Mobile-First**: Responsive design optimized for all devices
+- **Static Export**: Deploy anywhere with GitHub Pages, Vercel, or Netlify
+- **Performance**: Optimized bundle size and lazy loading
+- **Accessibility**: Full keyboard navigation and screen reader support
 
 ## 📖 How to Add Stories
 

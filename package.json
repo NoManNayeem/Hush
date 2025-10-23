@@ -6,8 +6,7 @@
   "scripts": {
     "dev": "npm run gen:index && next dev",
     "build": "npm run gen:index && npm run gen:sitemap && next build",
-    "export": "next export",
-    "build:export": "npm run build && npm run export",
+    "build:export": "npm run build",
     "gen:index": "node scripts/generate-index.js",
     "gen:sitemap": "node scripts/gen-sitemap.js",
     "start": "next start",

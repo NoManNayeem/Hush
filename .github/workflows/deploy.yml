@@ -2,16 +2,30 @@ name: Deploy Hush to GitHub Pages
 
 on:
   push:
+    branches:
+      - main
     paths:
       - 'stories/**'
-      - 'content/**'
       - 'src/**'
       - 'public/**'
       - 'package.json'
       - 'next.config.js'
       - 'tailwind.config.ts'
       - 'tsconfig.json'
+      - '.github/workflows/**'
   workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
@@ -24,11 +38,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
           
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: npm ci
         
       - name: Generate story index
         run: npm run gen:index
@@ -38,23 +52,23 @@ jobs:
         
       - name: Build Next.js app
         run: npm run build
-        
+        env:
+          NEXT_PUBLIC_BASE_PATH: /hush
+          
       - name: Export static site
         run: npm run export
         
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./out
-          cname: # Optional: add custom domain here
-          
       - name: Create .nojekyll file
         run: touch out/.nojekyll
         
-      - name: Upload .nojekyll to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+        
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./out
-          keep_files: true
+          path: ./out
+          
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

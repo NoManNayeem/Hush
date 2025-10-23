@@ -5,275 +5,231 @@ import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { Button } from '@/components/ui/button'
-import { Search, Filter, Clock, User, Tag } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Search, Filter, Clock, User, Tag, Play, BookOpen, Star, Eye } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import Fuse from 'fuse.js'
+import Image from 'next/image'
 
 interface Story {
   id: string
   title: string
   author: string
-  coverImage: string
-  publishedAt: string
+  excerpt: string
   categories: string[]
   keywords: string[]
-  excerpt: string
+  slug: string
+  publishedAt: string
+  coverImage: string
   readingTime: string
 }
 
 export default function ExplorePage() {
   const [stories, setStories] = useState<Story[]>([])
   const [filteredStories, setFilteredStories] = useState<Story[]>([])
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<string>('all')
-  const [isLoading, setIsLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [allCategories, setAllCategories] = useState<string[]>([])
+  const [isLoaded, setIsLoaded] = useState(false)
 
-  // Mock data for now - will be replaced with actual data loading
   useEffect(() => {
-    const mockStories: Story[] = [
-      {
-        id: 'lightless-town',
-        title: 'The Lightless Town',
-        author: 'R. Night',
-        coverImage: '/assets/lightless.jpg',
-        publishedAt: '2023-05-10',
-        categories: ['horror', 'urban-legend'],
-        keywords: ['town', 'darkness', 'mystery'],
-        excerpt: 'At midnight, the town went quiet. Not the peaceful quiet of sleep, but the heavy silence of something that had been waiting.',
-        readingTime: '8 min'
-      },
-      {
-        id: 'nephilim-archives',
-        title: 'The Nephilim Archives',
-        author: 'A. Scholar',
-        coverImage: '/assets/nephilim.jpg',
-        publishedAt: '2023-06-15',
-        categories: ['theology', 'mystery', 'historical'],
-        keywords: ['ancient', 'giants', 'scripture'],
-        excerpt: 'Deep within the Vatican archives, a manuscript tells of beings that walked among us before the flood.',
-        readingTime: '12 min'
-      },
-      {
-        id: 'operation-moonfall',
-        title: 'Operation Moonfall',
-        author: 'J. Whistle',
-        coverImage: '/assets/moonfall.jpg',
-        publishedAt: '2023-07-22',
-        categories: ['conspiracy', 'sci-fi', 'space'],
-        keywords: ['moon', 'coverup', 'mission'],
-        excerpt: 'The official story says we never went back to the moon. The classified files tell a different tale.',
-        readingTime: '15 min'
-      },
-      {
-        id: 'infinite-staircase',
-        title: 'The Infinite Staircase',
-        author: 'M. Architect',
-        coverImage: '/assets/staircase.jpg',
-        publishedAt: '2023-08-05',
-        categories: ['mystery', 'horror', 'architectural'],
-        keywords: ['building', 'stairs', 'dimension'],
-        excerpt: 'The building had 13 floors. At least, that\'s what the blueprints said. But the elevator went higher.',
-        readingTime: '10 min'
-      },
-      {
-        id: 'last-transmission',
-        title: 'The Last Transmission from Earth',
-        author: 'S. Explorer',
-        coverImage: '/assets/transmission.jpg',
-        publishedAt: '2023-09-12',
-        categories: ['sci-fi', 'speculative', 'post-apocalyptic'],
-        keywords: ['space', 'earth', 'colony'],
-        excerpt: 'The final message from Earth reached the Mars colony three days after the planet went silent.',
-        readingTime: '13 min'
-      }
-    ]
+    async function fetchStories() {
+      const res = await fetch('/hush/index.json')
+      const data: Story[] = await res.json()
+      setStories(data)
+      setFilteredStories(data)
 
-    setStories(mockStories)
-    setFilteredStories(mockStories)
-    setIsLoading(false)
+      const categories = Array.from(new Set(data.flatMap(story => story.categories)))
+      setAllCategories(categories)
+      
+      // Trigger entrance animation
+      setTimeout(() => setIsLoaded(true), 100)
+    }
+    fetchStories()
   }, [])
 
-  // Filter stories based on search and category
   useEffect(() => {
-    let filtered = stories
+    let currentStories = stories
 
-    // Search filter
-    if (searchQuery) {
-      filtered = filtered.filter(story =>
-        story.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        story.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        story.keywords.some(keyword => keyword.toLowerCase().includes(searchQuery.toLowerCase()))
-      )
+    // Filter by category
+    if (selectedCategory) {
+      currentStories = currentStories.filter(story => story.categories.includes(selectedCategory))
     }
 
-    // Category filter
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter(story =>
-        story.categories.includes(selectedCategory)
-      )
+    // Search by term
+    if (searchTerm) {
+      const fuse = new Fuse(currentStories, {
+        keys: ['title', 'excerpt', 'author', 'categories', 'keywords'],
+        threshold: 0.3,
+      })
+      currentStories = fuse.search(searchTerm).map(result => result.item)
     }
 
-    setFilteredStories(filtered)
-  }, [stories, searchQuery, selectedCategory])
-
-  const allCategories = ['all', ...new Set(stories.flatMap(story => story.categories))]
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-muted-foreground">Loading stories...</p>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    )
-  }
+    setFilteredStories(currentStories)
+  }, [searchTerm, selectedCategory, stories])
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-black text-white">
+      {/* Cinematic Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-900/10 via-black to-cyan-900/10"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-black/30 to-black"></div>
+      
+      {/* Animated Particles */}
+      <div className="absolute inset-0">
+        {[...Array(30)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-1 h-1 bg-white/10 rounded-full animate-pulse"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 3}s`,
+              animationDuration: `${2 + Math.random() * 3}s`
+            }}
+          />
+        ))}
+      </div>
+
       <Navbar />
       
-      <main className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-            Explore Stories
+      <main className="relative z-10 container mx-auto px-4 py-8 pt-24">
+        {/* Hero Section */}
+        <div className={`text-center mb-12 transition-all duration-2000 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
+            Explore
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">
+              {' '}Stories
+            </span>
           </h1>
-          <p className="text-xl text-foreground/80 max-w-2xl mx-auto">
-            Discover immersive tales of mystery, conspiracy, and wonder. 
-            Each story unfolds as an interactive experience.
+          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+            Discover immersive narratives that blur the line between fiction and reality
           </p>
         </div>
 
         {/* Search and Filters */}
-        <div className="mb-8">
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            {/* Search */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <input
+        <div className={`mb-12 transition-all duration-2000 delay-500 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          <div className="flex flex-col md:flex-row gap-4 mb-8">
+            <div className="relative flex-grow">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Input
                 type="text"
-                placeholder="Search stories, keywords, or authors..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="Search stories..."
+                className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-
-            {/* Category Filter */}
-            <div className="flex items-center space-x-2">
-              <Filter className="h-5 w-5 text-muted-foreground" />
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-4 py-3 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                {allCategories.map(category => (
-                  <option key={category} value={category}>
-                    {category === 'all' ? 'All Categories' : category.charAt(0).toUpperCase() + category.slice(1)}
-                  </option>
-                ))}
-              </select>
-            </div>
           </div>
-
-          {/* Results count */}
-          <p className="text-sm text-muted-foreground">
-            {filteredStories.length} {filteredStories.length === 1 ? 'story' : 'stories'} found
-          </p>
+          
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={selectedCategory === null ? 'default' : 'outline'}
+              onClick={() => setSelectedCategory(null)}
+              className={cn(
+                "flex items-center transition-all duration-300",
+                selectedCategory === null 
+                  ? "bg-gradient-to-r from-purple-600 to-cyan-600 text-white border-0" 
+                  : "bg-white/5 text-white border-white/10 hover:bg-white/10"
+              )}
+            >
+              <Filter className="h-4 w-4 mr-2" /> All Stories
+            </Button>
+            {allCategories.map(category => (
+              <Button
+                key={category}
+                variant={selectedCategory === category ? 'default' : 'outline'}
+                onClick={() => setSelectedCategory(category)}
+                className={cn(
+                  "flex items-center transition-all duration-300",
+                  selectedCategory === category 
+                    ? "bg-gradient-to-r from-purple-600 to-cyan-600 text-white border-0" 
+                    : "bg-white/5 text-white border-white/10 hover:bg-white/10"
+                )}
+              >
+                <Tag className="h-4 w-4 mr-2" /> {category}
+              </Button>
+            ))}
+          </div>
         </div>
 
         {/* Stories Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredStories.map((story) => (
-            <Link
-              key={story.id}
-              href={`/story/${story.id}`}
-              className="group block"
-            >
-              <div className="bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 group-hover:scale-105">
-                {/* Cover Image */}
-                <div className="aspect-video bg-gradient-to-br from-purple-900 to-cyan-900 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <h3 className="text-xl font-semibold text-white mb-1">
-                      {story.title}
-                    </h3>
-                    <p className="text-sm text-white/80">
-                      by {story.author}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div className="p-6">
-                  <p className="text-foreground/80 mb-4 line-clamp-3">
-                    {story.excerpt}
-                  </p>
-
-                  {/* Meta */}
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-1">
-                        <Clock className="h-4 w-4" />
-                        <span>{story.readingTime}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <User className="h-4 w-4" />
-                        <span>{story.author}</span>
+        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 transition-all duration-2000 delay-1000 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          {filteredStories.length > 0 ? (
+            filteredStories.map((story, index) => (
+              <Link href={`/story/${story.slug}`} key={story.id}>
+                <div 
+                  className="group relative bg-white/5 backdrop-blur-sm rounded-xl overflow-hidden shadow-2xl border border-white/10 hover:border-white/20 transition-all duration-500 hover:scale-105 hover:shadow-purple-500/20"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  {/* Story Cover */}
+                  <div className="relative h-48 overflow-hidden">
+                    <Image
+                      src={story.coverImage}
+                      alt={story.title}
+                      fill
+                      className="object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    
+                    {/* Play Button Overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+                      <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30">
+                        <Play className="h-8 w-8 text-white ml-1" />
                       </div>
                     </div>
                   </div>
 
-                  {/* Categories */}
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    {story.categories.slice(0, 2).map((category) => (
-                      <span
-                        key={category}
-                        className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-muted text-muted-foreground"
-                      >
-                        <Tag className="h-3 w-3 mr-1" />
-                        {category}
-                      </span>
-                    ))}
-                    {story.categories.length > 2 && (
-                      <span className="text-xs text-muted-foreground">
-                        +{story.categories.length - 2} more
-                      </span>
-                    )}
+                  {/* Story Content */}
+                  <div className="p-6">
+                    <h2 className="text-xl font-bold text-white mb-3 group-hover:text-purple-300 transition-colors duration-300">
+                      {story.title}
+                    </h2>
+                    <p className="text-gray-300 text-sm mb-4 line-clamp-3">
+                      {story.excerpt}
+                    </p>
+                    
+                    {/* Categories */}
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {story.categories.map(category => (
+                        <span 
+                          key={category} 
+                          className="bg-gradient-to-r from-purple-500/20 to-cyan-500/20 text-purple-300 text-xs px-3 py-1 rounded-full border border-purple-500/30"
+                        >
+                          {category}
+                        </span>
+                      ))}
+                    </div>
+                    
+                    {/* Story Meta */}
+                    <div className="flex items-center justify-between text-sm text-gray-400">
+                      <div className="flex items-center">
+                        <User className="h-4 w-4 mr-1" />
+                        {story.author}
+                      </div>
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 mr-1" />
+                        {story.readingTime}
+                      </div>
+                    </div>
                   </div>
+
+                  {/* Hover Effects */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-xl"></div>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            ))
+          ) : (
+            <div className="col-span-full text-center py-16">
+              <div className="text-6xl mb-4">🔍</div>
+              <h3 className="text-2xl font-bold text-white mb-4">No stories found</h3>
+              <p className="text-gray-400 text-lg">
+                Try adjusting your search or filter criteria
+              </p>
+            </div>
+          )}
         </div>
-
-        {/* No Results */}
-        {filteredStories.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">🔍</div>
-            <h3 className="text-xl font-semibold text-foreground mb-2">
-              No stories found
-            </h3>
-            <p className="text-muted-foreground mb-4">
-              Try adjusting your search or filter criteria.
-            </p>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setSearchQuery('')
-                setSelectedCategory('all')
-              }}
-            >
-              Clear filters
-            </Button>
-          </div>
-        )}
       </main>
-
+      
       <Footer />
     </div>
   )
