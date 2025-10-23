@@ -10,6 +10,8 @@ import ReactionButton from './ReactionButton'
 import BookmarkButton from './BookmarkButton'
 import FocusToggle from './FocusToggle'
 import TextToSpeech, { useStoryTTS } from './TextToSpeech'
+import UtilityPanel from './UtilityPanel'
+import StoryOnboarding from './StoryOnboarding'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, ArrowRight, X, Play, Pause, Volume2, VolumeX } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -33,6 +35,8 @@ export default function Storyboard({ story }: StoryboardProps) {
   const [autoplayMode, setAutoplayMode] = useState<'disabled' | 'slow' | 'normal' | 'fast'>('disabled')
   const [showAutoplayIntro, setShowAutoplayIntro] = useState(false)
   const [autoplayProgress, setAutoplayProgress] = useState(0)
+  const [showUtilityPanel, setShowUtilityPanel] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null)
@@ -83,6 +87,12 @@ export default function Storyboard({ story }: StoryboardProps) {
   }, [currentBlock])
 
   useEffect(() => {
+    // Check if user has seen story onboarding
+    const hasSeenOnboarding = localStorage.getItem('hush:storyOnboardingSeen')
+    if (!hasSeenOnboarding) {
+      setShowOnboarding(true)
+    }
+
     // Load reading progress
     const loadProgress = async () => {
       const progress = await loadReadingProgress(story.id)
@@ -232,6 +242,22 @@ export default function Storyboard({ story }: StoryboardProps) {
     setShowAutoplayIntro(false)
   }
 
+  const handleReset = () => {
+    setCurrentBlock(0)
+    setAutoplayMode('disabled')
+    setAutoplayProgress(0)
+  }
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem('hush:storyOnboardingSeen', 'true')
+    setShowOnboarding(false)
+  }
+
+  const handleOnboardingSkip = () => {
+    localStorage.setItem('hush:storyOnboardingSeen', 'true')
+    setShowOnboarding(false)
+  }
+
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -247,10 +273,13 @@ export default function Storyboard({ story }: StoryboardProps) {
       } else if (event.key === 'p' || event.key === 'P') {
         event.preventDefault()
         toggleAutoPlay()
-      } else if (event.key === 't' || event.key === 'T') {
-        event.preventDefault()
-        toggleTTS()
-      }
+          } else if (event.key === 't' || event.key === 'T') {
+            event.preventDefault()
+            toggleTTS()
+          } else if (event.key === 's' || event.key === 'S') {
+            event.preventDefault()
+            setShowUtilityPanel(!showUtilityPanel)
+          }
     }
 
     window.addEventListener('keydown', handleKeyDown)
@@ -605,18 +634,44 @@ export default function Storyboard({ story }: StoryboardProps) {
         </div>
       )}
 
-      {/* Keyboard Shortcuts Hint */}
-      {!isFocusMode && showControls && (
-        <div className="fixed bottom-20 right-4 z-40 bg-black/80 backdrop-blur-sm border border-white/10 rounded-lg p-3 text-xs text-white/70">
-          <div className="space-y-1">
-            <div>← → Navigate</div>
-            <div>Space Next</div>
-            <div>F Focus Mode</div>
-            <div>P Auto-play</div>
-            <div>T Text-to-Speech</div>
-          </div>
+          {/* Story Onboarding */}
+          <StoryOnboarding
+            isOpen={showOnboarding}
+            onComplete={handleOnboardingComplete}
+            onSkip={handleOnboardingSkip}
+          />
+
+          {/* Utility Panel */}
+          <UtilityPanel
+            isOpen={showUtilityPanel}
+            onToggle={() => setShowUtilityPanel(!showUtilityPanel)}
+            autoplayMode={autoplayMode}
+            onAutoplayChange={setAutoplayMode}
+            ttsEnabled={ttsEnabled}
+            onTTSChange={setIsTTSEnabled}
+            typingSpeed={typingSpeed}
+            onTypingSpeedChange={setTypingSpeed}
+            focusMode={isFocusMode}
+            onFocusModeChange={setIsFocusMode}
+            currentBlock={currentBlock}
+            totalBlocks={story.blocks.length}
+            onNavigate={navigateBlocks}
+            onReset={handleReset}
+          />
+
+          {/* Keyboard Shortcuts Hint */}
+          {!isFocusMode && showControls && (
+            <div className="fixed bottom-20 right-4 z-40 bg-black/80 backdrop-blur-sm border border-white/10 rounded-lg p-3 text-xs text-white/70">
+              <div className="space-y-1">
+                <div>← → Navigate</div>
+                <div>Space Next</div>
+                <div>F Focus Mode</div>
+                <div>P Auto-play</div>
+                <div>T Text-to-Speech</div>
+                <div>S Settings Panel</div>
+              </div>
+            </div>
+          )}
         </div>
-      )}
-    </div>
-  )
-}
+      )
+    }
