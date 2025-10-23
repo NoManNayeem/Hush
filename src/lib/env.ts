@@ -47,7 +47,7 @@ export function validateEnv() {
   return warnings
 }
 
-// Initialize environment validation
-if (typeof window !== 'undefined') {
+// Initialize environment validation only in development
+if (typeof window !== 'undefined' && ENV.IS_DEVELOPMENT) {
   validateEnv()
 }

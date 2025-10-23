@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils'
 import Fuse from 'fuse.js'
 import Image from 'next/image'
 import { FullScreenLoading } from '@/components/LoadingSpinner'
+import TermsAgreementCheck from '@/components/TermsAgreementCheck'
 
 interface Story {
   id: string
@@ -34,6 +35,13 @@ export default function ExplorePage() {
   const [allCategories, setAllCategories] = useState<string[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [hasAgreedToTerms, setHasAgreedToTerms] = useState(false)
+
+  useEffect(() => {
+    // Check if user has agreed to terms
+    const agreed = localStorage.getItem('hush:termsAgreed')
+    setHasAgreedToTerms(agreed === 'true')
+  }, [])
 
   useEffect(() => {
     async function fetchStories() {
@@ -157,8 +165,17 @@ export default function ExplorePage() {
           </div>
         </div>
 
+        {/* Terms Agreement Check */}
+        {!hasAgreedToTerms && (
+          <TermsAgreementCheck 
+            showAsModal={true}
+            onAgreed={() => setHasAgreedToTerms(true)}
+          />
+        )}
+
         {/* Stories Grid */}
-        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 transition-all duration-2000 delay-1000 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+        {hasAgreedToTerms && (
+          <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 transition-all duration-2000 delay-1000 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           {filteredStories.length > 0 ? (
             filteredStories.map((story, index) => (
               <Link href={`/story/${story.slug}`} key={story.id}>
@@ -232,7 +249,8 @@ export default function ExplorePage() {
               </p>
             </div>
           )}
-        </div>
+          </div>
+        )}
       </main>
       
       <Footer />

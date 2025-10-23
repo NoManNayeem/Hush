@@ -30,6 +30,9 @@ export default function Storyboard({ story }: StoryboardProps) {
   const [isTTSEnabled, setIsTTSEnabled] = useState(false)
   const [isTyping, setIsTyping] = useState(false)
   const [typingSpeed, setTypingSpeed] = useState(50) // ms per character
+  const [autoplayMode, setAutoplayMode] = useState<'disabled' | 'slow' | 'normal' | 'fast'>('disabled')
+  const [showAutoplayIntro, setShowAutoplayIntro] = useState(false)
+  const [autoplayProgress, setAutoplayProgress] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null)
@@ -116,34 +119,51 @@ export default function Storyboard({ story }: StoryboardProps) {
     return () => clearTimeout(hideTimeout)
   }, [currentBlock])
 
+  // Enhanced autoplay system with better UX
   useEffect(() => {
-    // Enhanced auto-play functionality with intelligent timing
-    if (isPlaying) {
+    if (autoplayMode !== 'disabled') {
       const getBlockReadTime = (block: StoryBlock): number => {
-        // Calculate reading time based on block type and content
+        // Base reading time calculation
+        let baseTime = 3000 // Default 3 seconds
+        
         switch (block.type) {
           case 'heading':
           case 'subheading':
-            return 2000 // 2 seconds for headings
+            baseTime = 2000
+            break
           case 'paragraph':
             const wordCount = block.text?.split(' ').length || 0
-            return Math.max(3000, wordCount * 200) // 200ms per word, min 3s
+            baseTime = Math.max(3000, wordCount * 150) // 150ms per word
+            break
           case 'image':
-            return 4000 // 4 seconds for images
+            baseTime = 4000
+            break
           case 'video':
-            return 10000 // 10 seconds for videos (user can pause)
+            baseTime = 8000 // Shorter for autoplay
+            break
           case 'mermaid':
           case 'reactflow':
-            return 6000 // 6 seconds for diagrams
+            baseTime = 5000
+            break
           case 'three-scene':
-            return 8000 // 8 seconds for 3D scenes
+            baseTime = 6000
+            break
           case 'quote':
-            return 5000 // 5 seconds for quotes
+            baseTime = 4000
+            break
           case 'code':
-            return 4000 // 4 seconds for code
-          default:
-            return 3000 // Default 3 seconds
+            baseTime = 3500
+            break
         }
+
+        // Apply speed multiplier based on autoplay mode
+        const speedMultipliers = {
+          'slow': 1.5,
+          'normal': 1.0,
+          'fast': 0.6
+        }
+        
+        return Math.round(baseTime * speedMultipliers[autoplayMode])
       }
 
       const scheduleNextBlock = () => {
@@ -151,13 +171,24 @@ export default function Storyboard({ story }: StoryboardProps) {
           const nextBlock = story.blocks[currentBlock + 1]
           const readTime = getBlockReadTime(nextBlock)
           
+          // Update progress
+          setAutoplayProgress(0)
+          const progressInterval = setInterval(() => {
+            setAutoplayProgress(prev => {
+              const newProgress = prev + (100 / (readTime / 100))
+              return newProgress >= 100 ? 100 : newProgress
+            })
+          }, 100)
+          
           autoPlayRef.current = setTimeout(() => {
+            clearInterval(progressInterval)
             setCurrentBlock(prev => prev + 1)
-            scheduleNextBlock() // Schedule the next block
+            scheduleNextBlock()
           }, readTime)
         } else {
           // Story finished
-          setIsPlaying(false)
+          setAutoplayMode('disabled')
+          setAutoplayProgress(0)
         }
       }
 
@@ -166,6 +197,7 @@ export default function Storyboard({ story }: StoryboardProps) {
       if (autoPlayRef.current) {
         clearTimeout(autoPlayRef.current)
       }
+      setAutoplayProgress(0)
     }
 
     return () => {
@@ -173,7 +205,7 @@ export default function Storyboard({ story }: StoryboardProps) {
         clearTimeout(autoPlayRef.current)
       }
     }
-  }, [isPlaying, currentBlock, story.blocks])
+  }, [autoplayMode, currentBlock, story.blocks])
 
   const navigateBlocks = (direction: 'next' | 'prev') => {
     if (direction === 'next' && currentBlock < story.blocks.length - 1) {
@@ -188,7 +220,16 @@ export default function Storyboard({ story }: StoryboardProps) {
   }
 
   const toggleAutoPlay = () => {
-    setIsPlaying(!isPlaying)
+    if (autoplayMode === 'disabled') {
+      setShowAutoplayIntro(true)
+    } else {
+      setAutoplayMode('disabled')
+    }
+  }
+
+  const startAutoplay = (mode: 'slow' | 'normal' | 'fast') => {
+    setAutoplayMode(mode)
+    setShowAutoplayIntro(false)
   }
 
   // Keyboard navigation
@@ -294,19 +335,26 @@ export default function Storyboard({ story }: StoryboardProps) {
                 </Button>
                 <h1 className="text-lg font-bold text-white truncate max-w-md">{story.title}</h1>
                 <div className="flex items-center space-x-1">
-                  {/* Auto-play Control */}
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={toggleAutoPlay} 
-                    className={cn(
-                      "text-white hover:bg-white/10 transition-all duration-300",
-                      isPlaying ? "bg-purple-500/20 text-purple-300" : "text-white/80"
+                  {/* Enhanced Auto-play Control */}
+                  <div className="relative">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={toggleAutoPlay} 
+                      className={cn(
+                        "text-white hover:bg-white/10 transition-all duration-300",
+                        autoplayMode !== 'disabled' ? "bg-purple-500/20 text-purple-300" : "text-white/80"
+                      )}
+                      title={autoplayMode !== 'disabled' ? "Stop auto-play" : "Start auto-play"}
+                    >
+                      {autoplayMode !== 'disabled' ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                    </Button>
+                    
+                    {/* Autoplay Mode Indicator */}
+                    {autoplayMode !== 'disabled' && (
+                      <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-purple-400 rounded-full animate-pulse"></div>
                     )}
-                    title={isPlaying ? "Pause auto-play" : "Start auto-play"}
-                  >
-                    {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-                  </Button>
+                  </div>
                   
                   {/* TTS Control */}
                   <Button
@@ -366,18 +414,92 @@ export default function Storyboard({ story }: StoryboardProps) {
             </div>
           )}
 
-      {/* Auto-play Indicator */}
-      {isPlaying && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-40 bg-purple-500/10 border border-purple-500/20 rounded-lg px-4 py-2 backdrop-blur-sm">
-          <div className="flex items-center space-x-2 text-purple-300">
-            <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
-            <span className="text-sm font-medium">Auto-playing</span>
-            <span className="text-xs text-purple-400">
-              {Math.ceil((story.blocks.length - currentBlock - 1) * 3)}s remaining
-            </span>
-          </div>
-        </div>
-      )}
+          {/* Enhanced Auto-play Indicator */}
+          {autoplayMode !== 'disabled' && (
+            <div className="fixed top-20 left-1/2 -translate-x-1/2 z-40 bg-purple-500/10 border border-purple-500/20 rounded-lg px-4 py-2 backdrop-blur-sm">
+              <div className="flex items-center space-x-3 text-purple-300">
+                <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium">
+                  Auto-playing ({autoplayMode})
+                </span>
+                <div className="w-16 h-1 bg-purple-500/20 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-purple-400 transition-all duration-100"
+                    style={{ width: `${autoplayProgress}%` }}
+                  ></div>
+                </div>
+                <span className="text-xs text-purple-400">
+                  {Math.ceil((story.blocks.length - currentBlock - 1) * 2)}s remaining
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Autoplay Intro Modal */}
+          {showAutoplayIntro && (
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 max-w-md w-full">
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-cyan-500 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <Play className="h-8 w-8 text-white" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-white mb-2">Choose Auto-play Speed</h2>
+                  <p className="text-gray-300 text-sm">
+                    Let the story unfold automatically at your preferred pace
+                  </p>
+                </div>
+
+                <div className="space-y-3 mb-6">
+                  <Button 
+                    onClick={() => startAutoplay('slow')}
+                    className="w-full py-4 text-left bg-white/5 hover:bg-white/10 border border-white/10 text-white"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+                      <div>
+                        <div className="font-semibold">Slow & Thoughtful</div>
+                        <div className="text-xs text-gray-400">~4-6 seconds per block</div>
+                      </div>
+                    </div>
+                  </Button>
+
+                  <Button 
+                    onClick={() => startAutoplay('normal')}
+                    className="w-full py-4 text-left bg-white/5 hover:bg-white/10 border border-white/10 text-white"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
+                      <div>
+                        <div className="font-semibold">Normal Pace</div>
+                        <div className="text-xs text-gray-400">~3-4 seconds per block</div>
+                      </div>
+                    </div>
+                  </Button>
+
+                  <Button 
+                    onClick={() => startAutoplay('fast')}
+                    className="w-full py-4 text-left bg-white/5 hover:bg-white/10 border border-white/10 text-white"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-3 h-3 bg-orange-400 rounded-full"></div>
+                      <div>
+                        <div className="font-semibold">Quick Read</div>
+                        <div className="text-xs text-gray-400">~2-3 seconds per block</div>
+                      </div>
+                    </div>
+                  </Button>
+                </div>
+
+                <Button 
+                  variant="outline"
+                  onClick={() => setShowAutoplayIntro(false)}
+                  className="w-full py-3 border-white/20 text-white hover:bg-white/10"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
 
       {/* Story Content */}
       <div className={cn(
