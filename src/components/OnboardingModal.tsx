@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { setOnboardingComplete, checkOnboardingStatus } from '@/lib/storage'
+import { setOnboardingComplete } from '@/lib/storage'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -65,9 +65,9 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border">
           <div className="flex items-center space-x-2">
-            <span className="text-2xl">{slides[currentSlide].icon}</span>
+            <span className="text-2xl">{slides[currentSlide]?.icon}</span>
             <h2 className="text-xl font-semibold text-foreground">
-              {slides[currentSlide].title}
+              {slides[currentSlide]?.title}
             </h2>
           </div>
           <Button
@@ -84,7 +84,7 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
         <div className="p-6">
           <div className="min-h-[200px] flex flex-col justify-center">
             <p className="text-lg text-foreground/90 leading-relaxed text-center">
-              {slides[currentSlide].content}
+              {slides[currentSlide]?.content}
             </p>
           </div>
 

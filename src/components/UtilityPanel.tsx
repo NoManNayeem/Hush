@@ -10,7 +10,6 @@ import {
   Pause, 
   Volume2, 
   VolumeX, 
-  Type, 
   Zap, 
   Eye, 
   EyeOff,
@@ -62,6 +61,7 @@ export default function UtilityPanel({
       const timer = setTimeout(() => setIsMinimized(true), 3000)
       return () => clearTimeout(timer)
     }
+    return () => {}
   }, [isOpen])
 
   const autoplayOptions = [
@@ -262,7 +262,7 @@ export default function UtilityPanel({
                       </div>
                       <Slider
                         value={[typingSpeed]}
-                        onValueChange={([value]) => onTypingSpeedChange(value)}
+                        onValueChange={([value]) => onTypingSpeedChange(value || 50)}
                         min={20}
                         max={100}
                         step={10}

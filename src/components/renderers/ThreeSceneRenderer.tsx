@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense } from 'react'
+// import { Suspense } from 'react'
 
 interface ThreeSceneRendererProps {
   sceneId: string
@@ -8,7 +8,7 @@ interface ThreeSceneRendererProps {
 }
 
 // Simplified scene renderer that shows a placeholder for now
-export default function ThreeSceneRenderer({ sceneId, ...props }: ThreeSceneRendererProps) {
+export default function ThreeSceneRenderer({ sceneId }: ThreeSceneRendererProps) {
   const getSceneStyle = () => {
     switch (sceneId) {
       case 'horror':

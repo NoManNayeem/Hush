@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
@@ -8,14 +8,14 @@ import OnboardingModal from '@/components/OnboardingModal'
 import ParticleBackground from '@/components/ParticleBackground'
 import { Button } from '@/components/ui/button'
 import { checkOnboardingStatus } from '@/lib/storage'
-import { ArrowRight, Sparkles, Play, BookOpen, Search, Zap } from 'lucide-react'
+import { ArrowRight, Sparkles, Play } from 'lucide-react'
 
 export default function HomePage() {
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
   const router = useRouter()
-  const heroRef = useRef<HTMLDivElement>(null)
+  // const heroRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const checkOnboarding = async () => {

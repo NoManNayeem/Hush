@@ -5,7 +5,7 @@ import { Story, StoryBlock } from '@/lib/storyLoader'
 import { saveReadingProgress, loadReadingProgress } from '@/lib/storage'
 import StoryBlockRenderer from './StoryBlockRenderer'
 import ParticleBackground from './ParticleBackground'
-import SearchBar from './SearchBar'
+// import SearchBar from './SearchBar'
 import ReactionButton from './ReactionButton'
 import BookmarkButton from './BookmarkButton'
 import FocusToggle from './FocusToggle'
@@ -23,14 +23,14 @@ interface StoryboardProps {
 export default function Storyboard({ story }: StoryboardProps) {
   const [currentBlock, setCurrentBlock] = useState(0)
   const [isFocusMode, setIsFocusMode] = useState(false)
-  const [isBookmarked, setIsBookmarked] = useState(false)
-  const [reactions, setReactions] = useState<Record<string, number>>({})
-  const [isPlaying, setIsPlaying] = useState(false)
+  // const [isBookmarked, setIsBookmarked] = useState(false)
+  // const [reactions, setReactions] = useState<Record<string, number>>({})
+  // const [isPlaying, setIsPlaying] = useState(false)
   const [showControls, setShowControls] = useState(true)
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
-  const [isTTSEnabled, setIsTTSEnabled] = useState(false)
-  const [isTyping, setIsTyping] = useState(false)
+  // const [isTTSEnabled, setIsTTSEnabled] = useState(false)
+  // const [isTyping, setIsTyping] = useState(false)
   const [typingSpeed, setTypingSpeed] = useState(50) // ms per character
   const [autoplayMode, setAutoplayMode] = useState<'disabled' | 'slow' | 'normal' | 'fast'>('disabled')
   const [showAutoplayIntro, setShowAutoplayIntro] = useState(false)
@@ -40,11 +40,11 @@ export default function Storyboard({ story }: StoryboardProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null)
-  const typingRef = useRef<NodeJS.Timeout | null>(null)
+  // const typingRef = useRef<NodeJS.Timeout | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
   
   // TTS hook
-  const { isEnabled: ttsEnabled, toggleTTS, setCurrentBlockTTS } = useStoryTTS(story.id)
+  const { isEnabled: ttsEnabled, toggleTTS } = useStoryTTS(story.id)
 
   // Typing sound effect
   const playTypingSound = () => {
@@ -79,7 +79,7 @@ export default function Storyboard({ story }: StoryboardProps) {
       const currentBlockElement = containerRef.current.querySelector(`[data-block-index="${currentBlock}"]`)
       if (currentBlockElement) {
         // Different scroll behavior based on autoplay mode
-        const scrollOptions = autoplayMode !== 'disabled' 
+        const scrollOptions: ScrollIntoViewOptions = autoplayMode !== 'disabled' 
           ? { 
               behavior: 'smooth', 
               block: 'center',
@@ -106,7 +106,7 @@ export default function Storyboard({ story }: StoryboardProps) {
                 behavior: 'smooth', 
                 block: 'center',
                 inline: 'center'
-              })
+              } as ScrollIntoViewOptions)
             }
           }, 100)
         }
@@ -160,7 +160,8 @@ export default function Storyboard({ story }: StoryboardProps) {
   // Enhanced autoplay system with better UX
   useEffect(() => {
     if (autoplayMode !== 'disabled') {
-      const getBlockReadTime = (block: StoryBlock): number => {
+      const getBlockReadTime = (block: StoryBlock | undefined): number => {
+        if (!block) return 3000;
         // Base reading time calculation
         let baseTime = 3000 // Default 3 seconds
         
@@ -234,7 +235,7 @@ export default function Storyboard({ story }: StoryboardProps) {
                     behavior: 'smooth', 
                     block: 'center',
                     inline: 'center'
-                  })
+                  } as ScrollIntoViewOptions)
                 }
               }
             }
@@ -340,11 +341,11 @@ export default function Storyboard({ story }: StoryboardProps) {
   // Touch gesture handlers for mobile
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null)
-    setTouchStart(e.targetTouches[0].clientX)
+    setTouchStart(e.targetTouches[0]?.clientX || 0)
   }
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX)
+    setTouchEnd(e.targetTouches[0]?.clientX || 0)
   }
 
   const handleTouchEnd = () => {
@@ -601,7 +602,7 @@ export default function Storyboard({ story }: StoryboardProps) {
             >
                   <StoryBlockRenderer 
                     block={block} 
-                    enableTyping={!ttsEnabled && isPlaying}
+                    enableTyping={!ttsEnabled}
                     typingSpeed={typingSpeed}
                     onTypingCharacter={playTypingSound}
                   />
@@ -613,7 +614,7 @@ export default function Storyboard({ story }: StoryboardProps) {
                     text={getBlockText(block)}
                     storyId={story.id}
                     blockIndex={index}
-                    autoPlay={isPlaying}
+                    autoPlay={false}
                   />
                 </div>
               )}
@@ -699,7 +700,7 @@ export default function Storyboard({ story }: StoryboardProps) {
             autoplayMode={autoplayMode}
             onAutoplayChange={setAutoplayMode}
             ttsEnabled={ttsEnabled}
-            onTTSChange={setIsTTSEnabled}
+            onTTSChange={toggleTTS}
             typingSpeed={typingSpeed}
             onTypingSpeedChange={setTypingSpeed}
             focusMode={isFocusMode}

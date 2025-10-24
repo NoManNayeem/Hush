@@ -121,8 +121,9 @@ export default function SearchBar({ onStorySelect, placeholder = "Search stories
 
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside)
-      return () => document.removeEventListener('mousedown', handleClickOutside)
     }
+    
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [isOpen])
 
   return (

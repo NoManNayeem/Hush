@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Heart, Eye, Zap, MessageCircle, Smile } from 'lucide-react'
+import { Heart, Eye, Zap, MessageCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { getReactionsFor, setReaction } from '@/lib/storage'
@@ -194,7 +194,7 @@ interface QuickReactionsProps {
   showLabels?: boolean
 }
 
-export function QuickReactions({ storyId, className, showLabels = false }: QuickReactionsProps) {
+export function QuickReactions({ storyId, className }: QuickReactionsProps) {
   return (
     <div className={cn("flex items-center space-x-1", className)}>
       <ReactionButton 

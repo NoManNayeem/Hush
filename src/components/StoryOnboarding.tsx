@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { 
   Play, 
@@ -24,7 +24,7 @@ interface StoryOnboardingProps {
 
 export default function StoryOnboarding({ isOpen, onComplete, onSkip }: StoryOnboardingProps) {
   const [currentStep, setCurrentStep] = useState(0)
-  const [completedSteps, setCompletedSteps] = useState<number[]>([])
+  // const [completedSteps, setCompletedSteps] = useState<number[]>([])
 
   const steps = [
     {
@@ -165,7 +165,7 @@ export default function StoryOnboarding({ isOpen, onComplete, onSkip }: StoryOnb
   ]
 
   const handleNext = () => {
-    setCompletedSteps(prev => [...prev, currentStep])
+    // setCompletedSteps(prev => [...prev, currentStep])
     if (currentStep < steps.length - 1) {
       setCurrentStep(prev => prev + 1)
     } else {
@@ -193,10 +193,10 @@ export default function StoryOnboarding({ isOpen, onComplete, onSkip }: StoryOnb
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold text-white mb-1">
-              {steps[currentStep].title}
+              {steps[currentStep]?.title}
             </h2>
             <p className="text-gray-300 text-sm">
-              {steps[currentStep].subtitle}
+              {steps[currentStep]?.subtitle}
             </p>
           </div>
           <Button
@@ -227,7 +227,7 @@ export default function StoryOnboarding({ isOpen, onComplete, onSkip }: StoryOnb
 
         {/* Content */}
         <div className="mb-8">
-          {steps[currentStep].content}
+          {steps[currentStep]?.content}
         </div>
 
         {/* Navigation */}
@@ -252,7 +252,7 @@ export default function StoryOnboarding({ isOpen, onComplete, onSkip }: StoryOnb
             onClick={handleNext}
             className="bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700 text-white"
           >
-            {steps[currentStep].action}
+            {steps[currentStep]?.action}
             <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
         </div>

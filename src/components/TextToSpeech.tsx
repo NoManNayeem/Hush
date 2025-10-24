@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Volume2, VolumeX, Play, Pause, SkipForward, SkipBack } from 'lucide-react'
+import { Volume2, VolumeX, Play, Pause } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { ENV } from '@/lib/env'
@@ -25,8 +25,6 @@ interface TTSState {
 
 export default function TextToSpeech({ 
   text, 
-  storyId, 
-  blockIndex, 
   className,
   autoPlay = false 
 }: TextToSpeechProps) {

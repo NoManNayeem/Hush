@@ -1,14 +1,28 @@
 import React from 'react';
-import { StoryBlock } from '@/lib/storyLoader';
+import { StoryBlock, validateStoryBlock } from '@/lib/storyLoader';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import TypingAnimation from './TypingAnimation';
+import { StoryBlockSkeleton } from './LoadingSpinner';
+import { reportError } from './ErrorBoundary';
 
-// Dynamically import heavy components
-const MermaidRenderer = dynamic(() => import('./renderers/MermaidRenderer'), { ssr: false });
-const ReactFlowRenderer = dynamic(() => import('./renderers/ReactFlowRenderer'), { ssr: false });
-const ThreeSceneRenderer = dynamic(() => import('./renderers/ThreeSceneRenderer'), { ssr: false });
-const ReactPlayer = dynamic(() => import('react-player/lazy'), { ssr: false });
+// Dynamically import heavy components with error boundaries
+const MermaidRenderer = dynamic(() => import('./renderers/MermaidRenderer'), { 
+  ssr: false,
+  loading: () => <StoryBlockSkeleton />
+});
+const ReactFlowRenderer = dynamic(() => import('./renderers/ReactFlowRenderer'), { 
+  ssr: false,
+  loading: () => <StoryBlockSkeleton />
+});
+const ThreeSceneRenderer = dynamic(() => import('./renderers/ThreeSceneRenderer'), { 
+  ssr: false,
+  loading: () => <StoryBlockSkeleton />
+});
+const ReactPlayer = dynamic(() => import('react-player/lazy'), { 
+  ssr: false,
+  loading: () => <StoryBlockSkeleton />
+});
 
 interface StoryBlockRendererProps {
   block: StoryBlock;
@@ -23,7 +37,19 @@ export default function StoryBlockRenderer({
   typingSpeed = 50, 
   onTypingCharacter 
 }: StoryBlockRendererProps) {
-  switch (block.type) {
+  // Validate block structure
+  if (!validateStoryBlock(block)) {
+    console.error('Invalid story block:', block);
+    reportError(new Error('Invalid story block structure'), 'StoryBlockRenderer');
+    return (
+      <div className="my-8 p-4 bg-red-500/20 border border-red-500/50 rounded-lg">
+        <p className="text-red-400">Invalid story block format</p>
+      </div>
+    );
+  }
+
+  try {
+    switch (block.type) {
     case 'heading':
       return (
         <div className="my-12 text-center">
@@ -32,7 +58,7 @@ export default function StoryBlockRenderer({
               <TypingAnimation 
                 text={block.text || ''} 
                 speed={typingSpeed} 
-                onCharacter={onTypingCharacter}
+                onCharacter={onTypingCharacter || (() => {})}
                 className="text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400"
               />
             ) : (
@@ -49,7 +75,7 @@ export default function StoryBlockRenderer({
               <TypingAnimation 
                 text={block.text || ''} 
                 speed={typingSpeed} 
-                onCharacter={onTypingCharacter}
+                onCharacter={onTypingCharacter || (() => {})}
                 className="text-3xl md:text-4xl font-semibold text-white/90"
               />
             ) : (
@@ -66,7 +92,7 @@ export default function StoryBlockRenderer({
               <TypingAnimation 
                 text={block.text || ''} 
                 speed={typingSpeed} 
-                onCharacter={onTypingCharacter}
+                onCharacter={onTypingCharacter || (() => {})}
                 className="text-xl leading-relaxed text-white/80 font-light"
               />
             ) : (
@@ -291,8 +317,25 @@ export default function StoryBlockRenderer({
     default:
       return (
         <div className="my-8 p-4 bg-red-500/20 border border-red-500/50 rounded-lg">
-          <p className="text-red-400">Unknown block type: {block.type}</p>
+          <p className="text-red-400">Unknown block type: {(block as any).type}</p>
         </div>
       );
+    }
+  } catch (error) {
+    console.error('Error rendering story block:', error);
+    reportError(error as Error, 'StoryBlockRenderer');
+    return (
+      <div className="my-8 p-4 bg-red-500/20 border border-red-500/50 rounded-lg">
+        <p className="text-red-400">Error rendering story block</p>
+        {process.env.NODE_ENV === 'development' && (
+          <details className="mt-2">
+            <summary className="cursor-pointer text-sm text-red-300">Error Details</summary>
+            <pre className="mt-2 text-xs text-red-200 bg-red-900/20 p-2 rounded overflow-auto">
+              {error instanceof Error ? error.message : String(error)}
+            </pre>
+          </details>
+        )}
+      </div>
+    );
   }
 }

@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils'
 
 export default function DisclaimerPage() {
   const [hasAgreed, setHasAgreed] = useState(false)
-  const [isAnimating, setIsAnimating] = useState(false)
+  // const [isAnimating, setIsAnimating] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -26,7 +26,7 @@ export default function DisclaimerPage() {
   const handleAgreement = () => {
     if (hasAgreed) {
       localStorage.setItem('hush:termsAgreed', 'true')
-      setIsAnimating(true)
+      // setIsAnimating(true)
       setTimeout(() => {
         router.push('/explore')
       }, 500)
