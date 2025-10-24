@@ -14,11 +14,11 @@ const nextConfig = {
   // Always use basePath for GitHub Pages deployment
   basePath: '/Hush',
   assetPrefix: '/Hush/',
-  // Performance optimizations
-  experimental: {
-    optimizeCss: true,
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
-  },
+      // Performance optimizations
+      experimental: {
+        optimizeCss: true,
+        optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+      },
   // Compression
   compress: true,
   // Add webpack configuration to fix module resolution issues

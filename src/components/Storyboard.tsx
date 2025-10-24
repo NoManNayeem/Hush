@@ -13,7 +13,7 @@ import TextToSpeech, { useStoryTTS } from './TextToSpeech'
 import UtilityPanel from './UtilityPanel'
 import StoryOnboarding from './StoryOnboarding'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, ArrowRight, X, Play, Pause, Volume2, VolumeX } from 'lucide-react'
+import { ArrowLeft, ArrowRight, X, Play, Pause, Volume2, VolumeX, ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface StoryboardProps {
@@ -37,6 +37,13 @@ export default function Storyboard({ story }: StoryboardProps) {
   const [autoplayProgress, setAutoplayProgress] = useState(0)
   const [showUtilityPanel, setShowUtilityPanel] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
+  
+  // Cinematic UI state
+  const [isCinematicMode, setIsCinematicMode] = useState(true)
+  // const [transitionType, setTransitionType] = useState<'slide' | 'fade' | 'zoom' | 'flip'>('slide')
+  const [isTransitioning, setIsTransitioning] = useState(false)
+  const [showProgressBar, setShowProgressBar] = useState(true)
+  const [showBlockCounter, setShowBlockCounter] = useState(true)
   const containerRef = useRef<HTMLDivElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null)
@@ -45,6 +52,35 @@ export default function Storyboard({ story }: StoryboardProps) {
   
   // TTS hook
   const { isEnabled: ttsEnabled, toggleTTS } = useStoryTTS(story.id)
+
+  // Cinematic transition manager
+  const transitionToBlock = async (newBlock: number, _direction: 'next' | 'prev' = 'next') => {
+    if (isTransitioning || newBlock < 0 || newBlock >= story.blocks.length) return
+    
+    setIsTransitioning(true)
+    
+    // Add transition delay for cinematic effect
+    await new Promise(resolve => setTimeout(resolve, 300))
+    
+    setCurrentBlock(newBlock)
+    
+    // Transition completion
+    setTimeout(() => {
+      setIsTransitioning(false)
+    }, 800)
+  }
+
+  const nextBlock = () => {
+    if (currentBlock < story.blocks.length - 1) {
+      transitionToBlock(currentBlock + 1, 'next')
+    }
+  }
+
+  const prevBlock = () => {
+    if (currentBlock > 0) {
+      transitionToBlock(currentBlock - 1, 'prev')
+    }
+  }
 
   // Typing sound effect
   const playTypingSound = () => {
@@ -390,8 +426,8 @@ export default function Storyboard({ story }: StoryboardProps) {
   return (
     <div 
       className={cn(
-        "relative min-h-screen bg-black text-white overflow-hidden",
-        isFocusMode ? "overflow-hidden" : ""
+        "fixed inset-0 bg-black text-white overflow-hidden",
+        isCinematicMode ? "cinematic-viewport" : "relative min-h-screen"
       )}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -404,18 +440,145 @@ export default function Storyboard({ story }: StoryboardProps) {
       {/* Animated Particles */}
       <ParticleBackground count={20} opacity={0.1} />
 
-          {/* Enhanced Top Navigation with Better Controls */}
-          {!isFocusMode && (
-            <div className={cn(
-              "fixed top-0 left-0 right-0 z-50 p-4 bg-black/90 backdrop-blur-md border-b border-white/20 transition-all duration-300",
-              showControls ? "translate-y-0" : "-translate-y-full"
-            )}>
-              <div className="container mx-auto flex justify-between items-center">
-                <Button variant="ghost" size="icon" onClick={() => window.history.back()} className="text-white hover:bg-white/10">
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-                <h1 className="text-lg font-bold text-white truncate max-w-md">{story.title}</h1>
-                <div className="flex items-center space-x-1">
+      {/* Cinematic Content Area */}
+      <div className={cn(
+        "absolute inset-0 flex items-center justify-center",
+        isCinematicMode && "cinematic-content-area"
+      )}>
+        {/* Story Blocks Container */}
+        <div 
+          ref={containerRef}
+          className={cn(
+            "relative w-full h-full max-w-6xl mx-auto",
+            isCinematicMode && "cinematic-blocks-container"
+          )}
+        >
+          {/* Current Story Block */}
+          {story.blocks.map((block, index) => (
+            <div
+              key={index}
+              data-block-index={index}
+              className={cn(
+                "absolute inset-0 w-full h-full flex items-center justify-center",
+                "transition-all duration-800 ease-in-out",
+                isCinematicMode && "cinematic-block",
+                index === currentBlock ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full",
+                isTransitioning && "pointer-events-none"
+              )}
+              style={{
+                transform: index === currentBlock ? 'translateX(0)' : 'translateX(100%)',
+                zIndex: index === currentBlock ? 10 : 1
+              }}
+            >
+              <div className="w-full max-w-4xl mx-auto px-8">
+                <StoryBlockRenderer 
+                  block={block} 
+                  enableTyping={!ttsEnabled}
+                  typingSpeed={typingSpeed}
+                  onTypingCharacter={playTypingSound}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Cinematic Navigation Controls */}
+      {isCinematicMode && (
+        <>
+          {/* Progress Bar */}
+          {showProgressBar && (
+            <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-white/10">
+              <div 
+                className="h-full bg-gradient-to-r from-purple-500 to-cyan-500 transition-all duration-300"
+                style={{ width: `${((currentBlock + 1) / story.blocks.length) * 100}%` }}
+              />
+            </div>
+          )}
+
+          {/* Block Counter */}
+          {showBlockCounter && (
+            <div className="fixed top-4 right-4 z-50 bg-black/50 backdrop-blur-sm rounded-lg px-3 py-1 text-sm text-white">
+              {currentBlock + 1} / {story.blocks.length}
+            </div>
+          )}
+
+          {/* Navigation Arrows */}
+          <div className="fixed inset-0 z-40 pointer-events-none">
+            {/* Left Arrow */}
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-auto">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={prevBlock}
+                disabled={currentBlock === 0 || isTransitioning}
+                className="w-12 h-12 bg-black/50 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </Button>
+            </div>
+
+            {/* Right Arrow */}
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-auto">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={nextBlock}
+                disabled={currentBlock === story.blocks.length - 1 || isTransitioning}
+                className="w-12 h-12 bg-black/50 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronRight className="h-6 w-6" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Cinematic Controls */}
+          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center space-x-2 bg-black/50 backdrop-blur-sm rounded-lg px-4 py-2 border border-white/20">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsCinematicMode(!isCinematicMode)}
+              className="w-8 h-8 text-white hover:bg-white/20"
+              title="Toggle Cinematic Mode"
+            >
+              {isCinematicMode ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowProgressBar(!showProgressBar)}
+              className="w-8 h-8 text-white hover:bg-white/20"
+              title="Toggle Progress Bar"
+            >
+              <div className="w-4 h-1 bg-white rounded"></div>
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowBlockCounter(!showBlockCounter)}
+              className="w-8 h-8 text-white hover:bg-white/20"
+              title="Toggle Block Counter"
+            >
+              <span className="text-xs font-mono">#</span>
+            </Button>
+          </div>
+        </>
+      )}
+
+      {/* Enhanced Top Navigation with Better Controls */}
+      {!isFocusMode && !isCinematicMode && (
+        <div className={cn(
+          "fixed top-0 left-0 right-0 z-50 p-4 bg-black/90 backdrop-blur-md border-b border-white/20 transition-all duration-300",
+          showControls ? "translate-y-0" : "-translate-y-full"
+        )}>
+          <div className="container mx-auto flex justify-between items-center">
+            <Button variant="ghost" size="icon" onClick={() => window.history.back()} className="text-white hover:bg-white/10">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-lg font-bold text-white truncate max-w-md">{story.title}</h1>
+            <div className="flex items-center space-x-1">
                   {/* Enhanced Auto-play Control */}
                   <div className="relative">
                     <Button 

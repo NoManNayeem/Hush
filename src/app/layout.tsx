@@ -3,7 +3,12 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import ErrorBoundary from '@/components/ErrorBoundary'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ 
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+  fallback: ['system-ui', 'arial']
+})
 
 export const metadata: Metadata = {
   title: 'Hush - Immersive Storytelling Platform',
