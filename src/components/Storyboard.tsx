@@ -5,15 +5,8 @@ import { Story, StoryBlock } from '@/lib/storyLoader'
 import { saveReadingProgress, loadReadingProgress } from '@/lib/storage'
 import StoryBlockRenderer from './StoryBlockRenderer'
 import ParticleBackground from './ParticleBackground'
-// import SearchBar from './SearchBar'
-import ReactionButton from './ReactionButton'
-import BookmarkButton from './BookmarkButton'
-import FocusToggle from './FocusToggle'
-import TextToSpeech, { useStoryTTS } from './TextToSpeech'
-import UtilityPanel from './UtilityPanel'
-import StoryOnboarding from './StoryOnboarding'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, ArrowRight, X, Play, Pause, Volume2, VolumeX, ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Play, Pause, Volume2, VolumeX, Settings, SkipForward, SkipBack, Eye, EyeOff, Home } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface StoryboardProps {
@@ -22,191 +15,108 @@ interface StoryboardProps {
 
 export default function Storyboard({ story }: StoryboardProps) {
   const [currentBlock, setCurrentBlock] = useState(0)
-  const [isFocusMode, setIsFocusMode] = useState(false)
-  // const [isBookmarked, setIsBookmarked] = useState(false)
-  // const [reactions, setReactions] = useState<Record<string, number>>({})
-  // const [isPlaying, setIsPlaying] = useState(false)
+  const [isTheaterMode, setIsTheaterMode] = useState(true)
+  const [isAutoplay, setIsAutoplay] = useState(false)
+  const [autoplaySpeed, setAutoplaySpeed] = useState<'slow' | 'normal' | 'fast'>('normal')
   const [showControls, setShowControls] = useState(true)
+  const [isTransitioning, setIsTransitioning] = useState(false)
+  const [audioEnabled, setAudioEnabled] = useState(true)
+  const [backgroundMusic, setBackgroundMusic] = useState<HTMLAudioElement | null>(null)
+  const [isFocusMode, setIsFocusMode] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
-  // const [isTTSEnabled, setIsTTSEnabled] = useState(false)
-  // const [isTyping, setIsTyping] = useState(false)
-  const [typingSpeed, setTypingSpeed] = useState(50) // ms per character
-  const [autoplayMode, setAutoplayMode] = useState<'disabled' | 'slow' | 'normal' | 'fast'>('disabled')
-  const [showAutoplayIntro, setShowAutoplayIntro] = useState(false)
-  const [autoplayProgress, setAutoplayProgress] = useState(0)
-  const [showUtilityPanel, setShowUtilityPanel] = useState(false)
-  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [userInteracted, setUserInteracted] = useState(false)
   
-  // Cinematic UI state
-  const [isCinematicMode, setIsCinematicMode] = useState(true)
-  const [transitionType, setTransitionType] = useState<'slide' | 'fade' | 'zoom' | 'flip'>('slide')
-  const [isTransitioning, setIsTransitioning] = useState(false)
-  const [showProgressBar, setShowProgressBar] = useState(true)
-  const [showBlockCounter, setShowBlockCounter] = useState(true)
-  const [tvEffects, setTvEffects] = useState(true)
-  const [atmosphericMode, setAtmosphericMode] = useState(true)
-  const [soundEffects, setSoundEffects] = useState(true)
   const containerRef = useRef<HTMLDivElement>(null)
-  const progressRef = useRef<HTMLDivElement>(null)
-  const autoPlayRef = useRef<NodeJS.Timeout | null>(null)
-  // const typingRef = useRef<NodeJS.Timeout | null>(null)
-  const audioContextRef = useRef<AudioContext | null>(null)
-  
-  // TTS hook
-  const { isEnabled: ttsEnabled, toggleTTS } = useStoryTTS(story.id)
+  const autoplayRef = useRef<NodeJS.Timeout | null>(null)
+  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // TV-Style transition manager with dramatic effects
-  const transitionToBlock = async (newBlock: number, _direction: 'next' | 'prev' = 'next') => {
-    if (isTransitioning || newBlock < 0 || newBlock >= story.blocks.length) return
-    
-    setIsTransitioning(true)
-    
-    // Play transition sound
-    playTransitionSound()
-    
-    // Add dramatic transition delay
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
-    setCurrentBlock(newBlock)
-    
-    // Play TV static sound for effect
-    if (tvEffects) {
-      playTvStaticSound()
-    }
-    
-    // Transition completion
-    setTimeout(() => {
-      setIsTransitioning(false)
-    }, 1000)
-  }
-
-  const nextBlock = () => {
-    if (currentBlock < story.blocks.length - 1) {
-      transitionToBlock(currentBlock + 1, 'next')
-    }
-  }
-
-  const prevBlock = () => {
-    if (currentBlock > 0) {
-      transitionToBlock(currentBlock - 1, 'prev')
-    }
-  }
-
-  // TV Sound Effects
-  const playTypingSound = () => {
-    if (audioContextRef.current && soundEffects) {
-      const oscillator = audioContextRef.current.createOscillator()
-      const gainNode = audioContextRef.current.createGain()
-      
-      oscillator.connect(gainNode)
-      gainNode.connect(audioContextRef.current.destination)
-      
-      oscillator.frequency.setValueAtTime(800 + Math.random() * 400, audioContextRef.current.currentTime)
-      oscillator.type = 'sine'
-      
-      gainNode.gain.setValueAtTime(0.1, audioContextRef.current.currentTime)
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContextRef.current.currentTime + 0.1)
-      
-      oscillator.start()
-      oscillator.stop(audioContextRef.current.currentTime + 0.1)
-    }
-  }
-
-  const playTransitionSound = () => {
-    if (audioContextRef.current && soundEffects) {
-      const oscillator = audioContextRef.current.createOscillator()
-      const gainNode = audioContextRef.current.createGain()
-      
-      oscillator.connect(gainNode)
-      gainNode.connect(audioContextRef.current.destination)
-      
-      oscillator.type = 'sawtooth'
-      oscillator.frequency.setValueAtTime(200, audioContextRef.current.currentTime)
-      oscillator.frequency.exponentialRampToValueAtTime(400, audioContextRef.current.currentTime + 0.3)
-      
-      gainNode.gain.setValueAtTime(0.03, audioContextRef.current.currentTime)
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContextRef.current.currentTime + 0.3)
-      
-      oscillator.start()
-      oscillator.stop(audioContextRef.current.currentTime + 0.3)
-    }
-  }
-
-  const playTvStaticSound = () => {
-    if (audioContextRef.current && soundEffects) {
-      const oscillator = audioContextRef.current.createOscillator()
-      const gainNode = audioContextRef.current.createGain()
-      
-      oscillator.connect(gainNode)
-      gainNode.connect(audioContextRef.current.destination)
-      
-      oscillator.type = 'sawtooth'
-      oscillator.frequency.setValueAtTime(1000 + Math.random() * 2000, audioContextRef.current.currentTime)
-      
-      gainNode.gain.setValueAtTime(0.01, audioContextRef.current.currentTime)
-      
-      oscillator.start()
-      oscillator.stop(audioContextRef.current.currentTime + 0.1)
-    }
-  }
-
-  // Initialize audio context
+  // Mobile detection
   useEffect(() => {
-    if (typeof window !== 'undefined' && !audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent))
     }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Enhanced auto-scroll to current block with autoplay support
+  // Soft background music from web
   useEffect(() => {
-    if (containerRef.current) {
-      const currentBlockElement = containerRef.current.querySelector(`[data-block-index="${currentBlock}"]`)
-      if (currentBlockElement) {
-        // Different scroll behavior based on autoplay mode
-        const scrollOptions: ScrollIntoViewOptions = autoplayMode !== 'disabled' 
-          ? { 
-              behavior: 'smooth', 
-              block: 'center',
-              inline: 'center'
-            }
-          : { 
-              behavior: 'smooth', 
-              block: 'center' 
-            }
+    if (audioEnabled && isTheaterMode && userInteracted) {
+      // Use a very soft, ambient sound from a reliable source
+      const audio = new Audio('https://www.soundjay.com/misc/sounds/ambient-forest.mp3')
+      audio.loop = true
+      audio.volume = 0.03 // Very soft volume (3%)
+      audio.crossOrigin = 'anonymous'
+      
+      // Add error handling for CORS issues
+      audio.addEventListener('error', () => {
+        // Fallback to a different source if the first one fails
+        const fallbackAudio = new Audio('https://www.bensound.com/bensound-music/bensound-softbackground.mp3')
+        fallbackAudio.loop = true
+        fallbackAudio.volume = 0.03
+        fallbackAudio.crossOrigin = 'anonymous'
         
-        currentBlockElement.scrollIntoView(scrollOptions)
+        fallbackAudio.play().catch(() => {
+          console.log('Background audio requires user interaction')
+        })
         
-        // For autoplay, also ensure the element is fully visible
-        if (autoplayMode !== 'disabled') {
-          setTimeout(() => {
-            const rect = currentBlockElement.getBoundingClientRect()
-            const viewportHeight = window.innerHeight
-            const elementCenter = rect.top + rect.height / 2
-            const viewportCenter = viewportHeight / 2
-            
-            // If element is not centered, adjust scroll
-            if (Math.abs(elementCenter - viewportCenter) > 50) {
-              currentBlockElement.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'center',
-                inline: 'center'
-              } as ScrollIntoViewOptions)
-            }
-          }, 100)
+        setBackgroundMusic(fallbackAudio)
+      })
+      
+      // Try to play, but don't force it
+      audio.play().catch(() => {
+        // Audio autoplay blocked, user needs to interact first
+        console.log('Background audio requires user interaction')
+      })
+      
+      setBackgroundMusic(audio)
+    } else if (backgroundMusic) {
+      backgroundMusic.pause()
+      setBackgroundMusic(null)
+    }
+
+    return () => {
+      if (backgroundMusic) {
+        backgroundMusic.pause()
+      }
+    }
+  }, [audioEnabled, isTheaterMode, userInteracted])
+
+  // Auto-hide controls in theater mode
+  useEffect(() => {
+    if (isTheaterMode) {
+      const resetControls = () => {
+        setShowControls(true)
+        if (controlsTimeoutRef.current) {
+          clearTimeout(controlsTimeoutRef.current)
+        }
+        controlsTimeoutRef.current = setTimeout(() => {
+          setShowControls(false)
+        }, 3000)
+      }
+
+      const handleMouseMove = () => resetControls()
+      const handleKeyPress = () => resetControls()
+
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('keydown', handleKeyPress)
+
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('keydown', handleKeyPress)
+        if (controlsTimeoutRef.current) {
+          clearTimeout(controlsTimeoutRef.current)
         }
       }
     }
-  }, [currentBlock, autoplayMode])
+  }, [isTheaterMode])
 
+  // Load reading progress
   useEffect(() => {
-    // Check if user has seen story onboarding
-    const hasSeenOnboarding = localStorage.getItem('hush:storyOnboardingSeen')
-    if (!hasSeenOnboarding) {
-      setShowOnboarding(true)
-    }
-
-    // Load reading progress
     const loadProgress = async () => {
       const progress = await loadReadingProgress(story.id)
       if (progress) {
@@ -216,8 +126,8 @@ export default function Storyboard({ story }: StoryboardProps) {
     loadProgress()
   }, [story.id])
 
+  // Save reading progress
   useEffect(() => {
-    // Save reading progress
     const saveProgress = async () => {
       await saveReadingProgress({
         storyId: story.id,
@@ -229,190 +139,107 @@ export default function Storyboard({ story }: StoryboardProps) {
     saveProgress()
   }, [story.id, currentBlock])
 
+  // Enhanced Autoplay functionality
   useEffect(() => {
-    // Auto-hide controls
-    let hideTimeout: NodeJS.Timeout
-    const resetTimeout = () => {
-      clearTimeout(hideTimeout)
-      setShowControls(true)
-      hideTimeout = setTimeout(() => setShowControls(false), 3000)
+    if (autoplayRef.current) {
+      clearTimeout(autoplayRef.current)
     }
 
-    resetTimeout()
-    return () => clearTimeout(hideTimeout)
-  }, [currentBlock])
+    if (isAutoplay && currentBlock < story.blocks.length - 1 && !isTransitioning) {
+      const speeds = {
+        slow: 8000,
+        normal: 5000,
+        fast: 3000
+      }
 
-  // Fixed autoplay system
-  useEffect(() => {
-    // Clear any existing autoplay
-    if (autoPlayRef.current) {
-      clearTimeout(autoPlayRef.current)
-      autoPlayRef.current = null
-    }
-
-    if (autoplayMode !== 'disabled' && currentBlock < story.blocks.length - 1) {
-      const getBlockReadTime = (block: StoryBlock): number => {
-        let baseTime = 3000 // Default 3 seconds
-        
-        switch (block.type) {
+      // Calculate reading time based on content
+      const currentBlockData = story.blocks[currentBlock]
+      let baseTime = speeds[autoplaySpeed]
+      
+      if (currentBlockData) {
+        // Adjust timing based on content type
+        switch (currentBlockData.type) {
           case 'heading':
-            baseTime = 4000
-            break
-          case 'subheading':
-            baseTime = 3500
+            baseTime = Math.max(baseTime, 3000)
             break
           case 'paragraph':
-            const text = (block as any).text || ''
+            const text = (currentBlockData as any).text || ''
             const wordCount = text.split(' ').length
-            baseTime = Math.max(3000, wordCount * 150) // 150ms per word
+            baseTime = Math.max(baseTime, wordCount * 200) // 200ms per word
             break
           case 'image':
           case 'video':
-          case 'mermaid':
-          case 'reactflow':
-          case 'three-scene':
-          case 'embed':
-            baseTime = 6000
+            baseTime = Math.max(baseTime, 6000)
             break
           case 'quote':
-            baseTime = 4000
-            break
-          case 'code':
-            baseTime = 5000
+            baseTime = Math.max(baseTime, 4000)
             break
         }
-
-        // Apply speed multiplier based on autoplay mode
-        const speedMultipliers = {
-          'slow': 1.5,
-          'normal': 1.0,
-          'fast': 0.7
-        }
-        
-        return Math.ceil(baseTime * speedMultipliers[autoplayMode])
       }
 
-      const currentBlockData = story.blocks[currentBlock]
-      if (!currentBlockData) return
-      
-      const readTime = getBlockReadTime(currentBlockData)
-      
-      // Reset progress
-      setAutoplayProgress(0)
-      
-      // Animate progress
-      let startTime = Date.now()
-      const progressInterval = setInterval(() => {
-        const elapsed = Date.now() - startTime
-        const progress = Math.min(100, (elapsed / readTime) * 100)
-        setAutoplayProgress(progress)
-        
-        if (progress >= 100) {
-          clearInterval(progressInterval)
-        }
-      }, 50)
-
-      // Schedule next block
-      autoPlayRef.current = setTimeout(() => {
-        clearInterval(progressInterval)
-        if (currentBlock < story.blocks.length - 1) {
+      autoplayRef.current = setTimeout(() => {
+        if (isAutoplay && currentBlock < story.blocks.length - 1) {
           nextBlock()
         } else {
-          // Story finished
-          setAutoplayMode('disabled')
-          setAutoplayProgress(0)
+          setIsAutoplay(false) // Stop autoplay when story ends
         }
-      }, readTime)
-    } else {
-      setAutoplayProgress(0)
+      }, baseTime)
     }
 
     return () => {
-      if (autoPlayRef.current) {
-        clearTimeout(autoPlayRef.current)
-        autoPlayRef.current = null
+      if (autoplayRef.current) {
+        clearTimeout(autoplayRef.current)
       }
     }
-  }, [autoplayMode, currentBlock, story.blocks])
+  }, [isAutoplay, currentBlock, autoplaySpeed, story.blocks.length, isTransitioning])
 
-  const navigateBlocks = (direction: 'next' | 'prev') => {
-    if (direction === 'next' && currentBlock < story.blocks.length - 1) {
-      if (isCinematicMode) {
-        nextBlock()
-      } else {
+  const nextBlock = () => {
+    if (currentBlock < story.blocks.length - 1 && !isTransitioning) {
+      setIsTransitioning(true)
+      setTimeout(() => {
         setCurrentBlock(currentBlock + 1)
-      }
-    } else if (direction === 'prev' && currentBlock > 0) {
-      if (isCinematicMode) {
-        prevBlock()
-      } else {
-        setCurrentBlock(currentBlock - 1)
-      }
+        setIsTransitioning(false)
+      }, 300)
     }
+  }
+
+  const prevBlock = () => {
+    if (currentBlock > 0 && !isTransitioning) {
+      setIsTransitioning(true)
+      setTimeout(() => {
+        setCurrentBlock(currentBlock - 1)
+        setIsTransitioning(false)
+      }, 300)
+    }
+  }
+
+  const toggleAutoplay = () => {
+    setIsAutoplay(!isAutoplay)
+  }
+
+  const toggleAudio = () => {
+    setAudioEnabled(!audioEnabled)
+  }
+
+  const toggleTheaterMode = () => {
+    setIsTheaterMode(!isTheaterMode)
   }
 
   const toggleFocusMode = () => {
     setIsFocusMode(!isFocusMode)
-  }
-
-  const toggleAutoPlay = () => {
-    if (autoplayMode === 'disabled') {
-      setShowAutoplayIntro(true)
-    } else {
-      setAutoplayMode('disabled')
+    if (!isFocusMode) {
+      setIsAutoplay(false) // Stop autoplay when entering focus mode
     }
   }
 
-  const startAutoplay = (mode: 'slow' | 'normal' | 'fast') => {
-    setAutoplayMode(mode)
-    setShowAutoplayIntro(false)
-  }
-
-  const handleReset = () => {
-    setCurrentBlock(0)
-    setAutoplayMode('disabled')
-    setAutoplayProgress(0)
-  }
-
-  const handleOnboardingComplete = () => {
-    localStorage.setItem('hush:storyOnboardingSeen', 'true')
-    setShowOnboarding(false)
-  }
-
-  const handleOnboardingSkip = () => {
-    localStorage.setItem('hush:storyOnboardingSeen', 'true')
-    setShowOnboarding(false)
-  }
-
-  // Keyboard navigation
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'ArrowRight' || event.key === ' ') {
-        event.preventDefault()
-        navigateBlocks('next')
-      } else if (event.key === 'ArrowLeft') {
-        event.preventDefault()
-        navigateBlocks('prev')
-      } else if (event.key === 'f' || event.key === 'F') {
-        event.preventDefault()
-        toggleFocusMode()
-      } else if (event.key === 'p' || event.key === 'P') {
-        event.preventDefault()
-        toggleAutoPlay()
-          } else if (event.key === 't' || event.key === 'T') {
-            event.preventDefault()
-            toggleTTS()
-          } else if (event.key === 's' || event.key === 'S') {
-            event.preventDefault()
-            setShowUtilityPanel(!showUtilityPanel)
-          }
+  // Handle user interaction to start background music
+  const handleUserInteraction = () => {
+    if (!userInteracted) {
+      setUserInteracted(true)
     }
+  }
 
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [currentBlock, story.blocks.length])
-
-  // Touch gesture handlers for mobile
+  // Touch handling for mobile
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null)
     setTouchStart(e.targetTouches[0]?.clientX || 0)
@@ -430,590 +257,527 @@ export default function Storyboard({ story }: StoryboardProps) {
     const isRightSwipe = distance < -50
 
     if (isLeftSwipe) {
-      navigateBlocks('next')
+      nextBlock()
     } else if (isRightSwipe) {
-      navigateBlocks('prev')
+      prevBlock()
     }
   }
+
+  // Enhanced keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowRight' || event.key === ' ') {
+        event.preventDefault()
+        nextBlock()
+      } else if (event.key === 'ArrowLeft') {
+        event.preventDefault()
+        prevBlock()
+      } else if (event.key === 'a' || event.key === 'A') {
+        event.preventDefault()
+        toggleAutoplay()
+      } else if (event.key === 'm' || event.key === 'M') {
+        event.preventDefault()
+        toggleAudio()
+      } else if (event.key === 't' || event.key === 'T') {
+        event.preventDefault()
+        toggleTheaterMode()
+      } else if (event.key === 'f' || event.key === 'F') {
+        event.preventDefault()
+        toggleFocusMode()
+      } else if (event.key === 'Escape') {
+        event.preventDefault()
+        if (isFocusMode) {
+          setIsFocusMode(false)
+        } else {
+          window.history.back()
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [currentBlock, isAutoplay, audioEnabled, isTheaterMode, isFocusMode])
 
   const progressPercentage = ((currentBlock + 1) / story.blocks.length) * 100
 
-  // Helper function to extract text from blocks for TTS
-  const getBlockText = (block: StoryBlock): string => {
-    switch (block.type) {
-      case 'heading':
-      case 'subheading':
-      case 'paragraph':
-      case 'quote':
-        return block.text || ''
-      case 'code':
-        return block.code || ''
-      case 'image':
-      case 'video':
-      case 'embed':
-        return block.caption || ''
-      case 'mermaid':
-      case 'reactflow':
-      case 'three-scene':
-        return block.caption || ''
-      default:
-        return ''
-    }
-  }
-
   return (
-    <div 
-      className={cn(
-        "fixed inset-0 bg-black text-white overflow-hidden",
-        isCinematicMode ? "cinematic-viewport" : "relative min-h-screen"
+        <div 
+          className={cn(
+            "fixed inset-0 bg-black text-white overflow-hidden my-12",
+            isTheaterMode ? "theater-mode" : "standard-mode",
+            isFocusMode && "focus-mode"
+          )}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onClick={handleUserInteraction}
+          onKeyDown={handleUserInteraction}
+        >
+      {/* Theater Background */}
+      {isTheaterMode && (
+        <>
+          <div className="absolute inset-0 bg-gradient-to-b from-black via-gray-900 to-black"></div>
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_0%,_rgba(0,0,0,0.8)_100%)]"></div>
+          <ParticleBackground count={15} opacity={0.1} />
+        </>
       )}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
-      {/* Cinematic Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-900/10 via-black to-cyan-900/10"></div>
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-black/30 to-black"></div>
-      
-      {/* Animated Particles */}
-      <ParticleBackground count={20} opacity={0.1} />
 
-      {/* TV Screen Content Area */}
-      <div className={cn(
-        "absolute inset-0 flex items-center justify-center",
-        isCinematicMode && "cinematic-content-area",
-        tvEffects && "tv-screen-effects",
-        atmosphericMode && "atmospheric-lighting"
-      )}>
-        {/* Story Blocks Container */}
+      {/* Story Content */}
+      <div className="relative z-10 w-full h-full flex items-center justify-center">
         <div 
           ref={containerRef}
           className={cn(
-            "relative w-full h-full max-w-6xl mx-auto",
-            isCinematicMode && "cinematic-blocks-container",
-            tvEffects && "tv-glow-effect"
+            "w-full max-w-5xl mx-auto px-8",
+            isTheaterMode && "theater-content"
           )}
         >
           {/* Current Story Block */}
-          {story.blocks.map((block, index) => (
-            <div
-              key={index}
-              data-block-index={index}
-              className={cn(
-                "absolute inset-0 w-full h-full flex items-center justify-center",
-                "transition-all duration-1000 ease-in-out",
-                isCinematicMode && "cinematic-block",
-                tvEffects && "tv-block-effect",
-                index === currentBlock ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full",
-                isTransitioning && "pointer-events-none",
-                transitionType === 'slide' && index === currentBlock && "dramatic-slide",
-                transitionType === 'fade' && index === currentBlock && "dramatic-fade",
-                transitionType === 'zoom' && index === currentBlock && "dramatic-zoom"
-              )}
-              style={{
-                transform: index === currentBlock ? 'translateX(0)' : 'translateX(100%)',
-                zIndex: index === currentBlock ? 10 : 1,
-                animation: index === currentBlock && tvEffects ? 'tv-flicker 2s ease-in-out infinite' : 'none'
-              }}
-            >
-              <div className="w-full max-w-4xl mx-auto px-8">
-                <StoryBlockRenderer 
-                  block={block} 
-                  enableTyping={!ttsEnabled}
-                  typingSpeed={typingSpeed}
-                  onTypingCharacter={playTypingSound}
-                />
-              </div>
-            </div>
-          ))}
+          <div className={cn(
+            "transition-all duration-500 ease-in-out",
+            isTransitioning ? "opacity-0 scale-95" : "opacity-100 scale-100"
+          )}>
+            <StoryBlockRenderer 
+              block={story.blocks[currentBlock]} 
+              enableTyping={true}
+              typingSpeed={50}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Cinematic Navigation Controls */}
-      {isCinematicMode && (
+          {/* Theater Controls */}
+      {isTheaterMode && !isFocusMode && (
         <>
-          {/* Progress Bar */}
-          {showProgressBar && (
-            <div className="fixed top-0 left-0 right-0 z-[60] h-1 bg-white/10">
-              <div 
-                className="h-full bg-gradient-to-r from-purple-500 to-cyan-500 transition-all duration-300"
-                style={{ width: `${((currentBlock + 1) / story.blocks.length) * 100}%` }}
-              />
+          {/* Top Progress Bar */}
+          <div className={cn(
+            "fixed top-0 left-0 right-0 h-1 bg-white/10 transition-all duration-300 z-50",
+            showControls ? "opacity-100" : "opacity-0"
+          )}>
+            <div 
+              className="h-full bg-gradient-to-r from-purple-500 to-cyan-500 transition-all duration-500"
+              style={{ width: `${progressPercentage}%` }}
+            />
+          </div>
+
+          {/* Block Counter */}
+          <div className={cn(
+            "fixed top-4 right-4 bg-black/50 backdrop-blur-sm rounded-lg px-3 py-1 text-sm transition-all duration-300 z-50",
+            showControls ? "opacity-100" : "opacity-0"
+          )}>
+            {currentBlock + 1} / {story.blocks.length}
+          </div>
+
+          {/* Autoplay Indicator */}
+          {isAutoplay && (
+            <div className="fixed top-4 left-4 bg-purple-500/20 backdrop-blur-sm rounded-lg px-3 py-1 text-sm text-purple-300 z-50">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+                <span>Auto {autoplaySpeed}</span>
+              </div>
             </div>
           )}
 
-          {/* Block Counter */}
-          {showBlockCounter && (
-            <div className="fixed top-4 right-4 z-[60] bg-black/50 backdrop-blur-sm rounded-lg px-3 py-1 text-sm text-white">
-              {currentBlock + 1} / {story.blocks.length}
+          {/* Background Music Indicator */}
+          {audioEnabled && isTheaterMode && userInteracted && (
+            <div className="fixed top-16 left-4 bg-green-500/20 backdrop-blur-sm rounded-lg px-3 py-1 text-sm text-green-300 z-50">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span>Ambient</span>
+              </div>
             </div>
           )}
 
           {/* Navigation Arrows */}
-          <div className="fixed inset-0 z-[55] pointer-events-none">
-            {/* Left Arrow */}
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-auto">
+          <div className="fixed inset-0 pointer-events-none">
+            <div className="absolute left-8 top-1/2 -translate-y-1/2 pointer-events-auto">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={prevBlock}
                 disabled={currentBlock === 0 || isTransitioning}
-                className="w-12 h-12 bg-black/50 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                className={cn(
+                  "w-14 h-14 bg-black/50 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 disabled:opacity-50 transition-all duration-300",
+                  showControls ? "opacity-100" : "opacity-0"
+                )}
               >
-                <ChevronLeft className="h-6 w-6" />
+                <ArrowLeft className="h-6 w-6" />
               </Button>
             </div>
 
-            {/* Right Arrow */}
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-auto">
+            <div className="absolute right-8 top-1/2 -translate-y-1/2 pointer-events-auto">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={nextBlock}
                 disabled={currentBlock === story.blocks.length - 1 || isTransitioning}
-                className="w-12 h-12 bg-black/50 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                className={cn(
+                  "w-14 h-14 bg-black/50 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 disabled:opacity-50 transition-all duration-300",
+                  showControls ? "opacity-100" : "opacity-0"
+                )}
               >
-                <ChevronRight className="h-6 w-6" />
+                <ArrowRight className="h-6 w-6" />
               </Button>
             </div>
           </div>
 
-          {/* TV Remote Controls */}
-          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] flex items-center space-x-2 bg-black/70 backdrop-blur-sm rounded-xl px-6 py-3 border border-white/30 shadow-2xl">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsCinematicMode(!isCinematicMode)}
-              className="w-10 h-10 text-white hover:bg-white/20 rounded-lg"
-              title="Toggle TV Mode"
-            >
-              {isCinematicMode ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTvEffects(!tvEffects)}
-              className={cn(
-                "w-10 h-10 text-white hover:bg-white/20 rounded-lg",
-                tvEffects && "bg-purple-500/30"
-              )}
-              title="Toggle TV Effects"
-            >
-              <span className="text-sm">📺</span>
-            </Button>
+          {/* Mobile-Optimized Bottom Control Bar */}
+          <div className={cn(
+            "fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-xl border-t border-white/10 transition-all duration-300 z-50",
+            showControls ? "translate-y-0" : "translate-y-full"
+          )}>
+            <div className={cn(
+              "container mx-auto px-4 py-3",
+              isMobile ? "px-2 py-2" : "px-6 py-4"
+            )}>
+              <div className={cn(
+                "flex items-center justify-between",
+                isMobile ? "flex-col space-y-2" : "flex-row"
+              )}>
+                {/* Mobile: Stack controls vertically */}
+                {isMobile ? (
+                  <>
+                    {/* Top Row - Main Controls */}
+                    <div className="flex items-center justify-center space-x-6 w-full">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={prevBlock}
+                        disabled={currentBlock === 0 || isTransitioning}
+                        className="w-12 h-12 text-white hover:bg-white/20 disabled:opacity-50"
+                        title="Previous"
+                      >
+                        <SkipBack className="h-6 w-6" />
+                      </Button>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setAtmosphericMode(!atmosphericMode)}
-              className={cn(
-                "w-10 h-10 text-white hover:bg-white/20 rounded-lg",
-                atmosphericMode && "bg-cyan-500/30"
-              )}
-              title="Toggle Atmospheric Lighting"
-            >
-              <span className="text-sm">✨</span>
-            </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={toggleAutoplay}
+                        className={cn(
+                          "w-14 h-14 text-white hover:bg-white/20 rounded-full",
+                          isAutoplay && "text-purple-400 bg-purple-500/20"
+                        )}
+                        title="Toggle Autoplay"
+                      >
+                        {isAutoplay ? <Pause className="h-7 w-7" /> : <Play className="h-7 w-7" />}
+                      </Button>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSoundEffects(!soundEffects)}
-              className={cn(
-                "w-10 h-10 text-white hover:bg-white/20 rounded-lg",
-                soundEffects && "bg-green-500/30"
-              )}
-              title="Toggle Sound Effects"
-            >
-              <span className="text-sm">🔊</span>
-            </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={nextBlock}
+                        disabled={currentBlock === story.blocks.length - 1 || isTransitioning}
+                        className="w-12 h-12 text-white hover:bg-white/20 disabled:opacity-50"
+                        title="Next"
+                      >
+                        <SkipForward className="h-6 w-6" />
+                      </Button>
+                    </div>
 
-            <div className="w-px h-6 bg-white/20 mx-2"></div>
+                    {/* Bottom Row - Settings */}
+                    <div className="flex items-center justify-center space-x-4 w-full">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={toggleFocusMode}
+                        className={cn(
+                          "w-10 h-10 text-white hover:bg-white/20",
+                          isFocusMode && "text-blue-400 bg-blue-500/20"
+                        )}
+                        title="Focus Mode"
+                      >
+                        <Eye className="h-5 w-5" />
+                      </Button>
+                      
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={toggleAudio}
+                        className={cn(
+                          "w-10 h-10 text-white hover:bg-white/20",
+                          audioEnabled && "text-green-400"
+                        )}
+                        title="Toggle Audio"
+                      >
+                        {audioEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+                      </Button>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowProgressBar(!showProgressBar)}
-              className="w-10 h-10 text-white hover:bg-white/20 rounded-lg"
-              title="Toggle Progress Bar"
-            >
-              <div className="w-4 h-1 bg-white rounded"></div>
-            </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={toggleTheaterMode}
+                        className="w-10 h-10 text-white hover:bg-white/20"
+                        title="Exit Theater Mode"
+                      >
+                        <EyeOff className="h-5 w-5" />
+                      </Button>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowBlockCounter(!showBlockCounter)}
-              className="w-10 h-10 text-white hover:bg-white/20 rounded-lg"
-              title="Toggle Block Counter"
-            >
-              <span className="text-xs font-mono">#</span>
-            </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => window.history.back()}
+                        className="w-10 h-10 text-white hover:bg-white/20"
+                        title="Back to Stories"
+                      >
+                        <Home className="h-5 w-5" />
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  /* Desktop: Horizontal layout */
+                  <>
+                    {/* Left Controls */}
+                    <div className="flex items-center space-x-4">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={toggleFocusMode}
+                        className={cn(
+                          "w-10 h-10 text-white hover:bg-white/20",
+                          isFocusMode && "text-blue-400 bg-blue-500/20"
+                        )}
+                        title="Focus Mode"
+                      >
+                        <Eye className="h-5 w-5" />
+                      </Button>
+                      
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={toggleAudio}
+                        className={cn(
+                          "w-10 h-10 text-white hover:bg-white/20",
+                          audioEnabled && "text-green-400"
+                        )}
+                        title="Toggle Audio"
+                      >
+                        {audioEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+                      </Button>
+                    </div>
 
-            <div className="w-px h-6 bg-white/20 mx-2"></div>
+                    {/* Center Controls */}
+                    <div className="flex items-center space-x-4">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={prevBlock}
+                        disabled={currentBlock === 0 || isTransitioning}
+                        className="w-10 h-10 text-white hover:bg-white/20 disabled:opacity-50"
+                        title="Previous"
+                      >
+                        <SkipBack className="h-5 w-5" />
+                      </Button>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTransitionType(transitionType === 'slide' ? 'fade' : transitionType === 'fade' ? 'zoom' : 'slide')}
-              className="w-10 h-10 text-white hover:bg-white/20 rounded-lg"
-              title={`Transition: ${transitionType}`}
-            >
-              <span className="text-xs">
-                {transitionType === 'slide' ? '→' : transitionType === 'fade' ? '○' : '⚡'}
-              </span>
-            </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={toggleAutoplay}
+                        className={cn(
+                          "w-12 h-12 text-white hover:bg-white/20",
+                          isAutoplay && "text-purple-400 bg-purple-500/20"
+                        )}
+                        title="Toggle Autoplay"
+                      >
+                        {isAutoplay ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={nextBlock}
+                        disabled={currentBlock === story.blocks.length - 1 || isTransitioning}
+                        className="w-10 h-10 text-white hover:bg-white/20 disabled:opacity-50"
+                        title="Next"
+                      >
+                        <SkipForward className="h-5 w-5" />
+                      </Button>
+                    </div>
+
+                    {/* Right Controls */}
+                    <div className="flex items-center space-x-4">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={toggleTheaterMode}
+                        className="w-10 h-10 text-white hover:bg-white/20"
+                        title="Exit Theater Mode"
+                      >
+                        <EyeOff className="h-5 w-5" />
+                      </Button>
+                      
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => window.history.back()}
+                        className="w-10 h-10 text-white hover:bg-white/20"
+                        title="Back to Stories"
+                      >
+                        <Home className="h-5 w-5" />
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* Mobile Cinematic Controls */}
-          <div className="fixed bottom-20 left-4 right-4 z-[60] md:hidden">
-            <div className="flex justify-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={prevBlock}
-                disabled={currentBlock === 0 || isTransitioning}
-                className="flex-1 bg-black/50 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 disabled:opacity-50"
-              >
-                <ChevronLeft className="h-4 w-4 mr-2" />
-                Previous
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={nextBlock}
-                disabled={currentBlock === story.blocks.length - 1 || isTransitioning}
-                className="flex-1 bg-black/50 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 disabled:opacity-50"
-              >
-                Next
-                <ChevronRight className="h-4 w-4 ml-2" />
-              </Button>
+          {/* Keyboard Shortcuts Hint */}
+          <div className={cn(
+            "fixed bottom-20 right-4 bg-black/80 backdrop-blur-sm border border-white/10 rounded-lg p-3 text-xs text-white/70 transition-all duration-300 z-40",
+            showControls && !isMobile ? "opacity-100" : "opacity-0"
+          )}>
+            <div className="space-y-1">
+              <div>← → Navigate</div>
+              <div>Space Next</div>
+              <div>A Autoplay</div>
+              <div>M Audio</div>
+              <div>F Focus</div>
+              <div>T Theater</div>
+              <div>Esc Back</div>
             </div>
           </div>
         </>
       )}
 
-      {/* Enhanced Top Navigation with Better Controls */}
-      {!isFocusMode && !isCinematicMode && (
-        <div className={cn(
-          "fixed top-0 left-0 right-0 z-50 p-4 bg-black/90 backdrop-blur-md border-b border-white/20 transition-all duration-300",
-          showControls ? "translate-y-0" : "-translate-y-full"
-        )}>
-          <div className="container mx-auto flex justify-between items-center">
-            <Button variant="ghost" size="icon" onClick={() => window.history.back()} className="text-white hover:bg-white/10">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-lg font-bold text-white truncate max-w-md">{story.title}</h1>
-            <div className="flex items-center space-x-1">
-                  {/* Enhanced Auto-play Control */}
-                  <div className="relative">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={toggleAutoPlay} 
-                      className={cn(
-                        "text-white hover:bg-white/10 transition-all duration-300",
-                        autoplayMode !== 'disabled' ? "bg-purple-500/20 text-purple-300" : "text-white/80"
-                      )}
-                      title={autoplayMode !== 'disabled' ? "Stop auto-play" : "Start auto-play"}
-                    >
-                      {autoplayMode !== 'disabled' ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-                    </Button>
-                    
-                    {/* Autoplay Mode Indicator */}
-                    {autoplayMode !== 'disabled' && (
-                      <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-purple-400 rounded-full animate-pulse"></div>
-                    )}
-                  </div>
-                  
-                  {/* TTS Control */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={toggleTTS}
-                    className={cn(
-                      "text-white hover:bg-white/10 transition-all duration-300",
-                      ttsEnabled ? "bg-cyan-500/20 text-cyan-300" : "text-white/80"
-                    )}
-                    aria-label={ttsEnabled ? 'Disable text-to-speech' : 'Enable text-to-speech'}
-                    title={ttsEnabled ? "Disable TTS" : "Enable TTS"}
-                  >
-                    {ttsEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
-                  </Button>
-                  
-                  {/* Typing Speed Control (only when TTS is off) */}
-                  {!ttsEnabled && (
-                    <div className="flex items-center space-x-1 bg-white/5 rounded-lg px-2 py-1">
-                      <span className="text-xs text-white/60">Speed:</span>
-                      <input
-                        type="range"
-                        min="20"
-                        max="100"
-                        value={typingSpeed}
-                        onChange={(e) => setTypingSpeed(parseInt(e.target.value))}
-                        className="w-16 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer"
-                        title="Typing speed"
-                      />
-                    </div>
-                  )}
-                  
-                  <FocusToggle
-                    isFocusMode={isFocusMode}
-                    onToggle={setIsFocusMode}
-                    size="sm"
-                  />
-                  <BookmarkButton
-                    story={{
-                      id: story.id,
-                      title: story.title,
-                      slug: story.id,
-                      coverImage: story.coverImage,
-                      author: story.author,
-                      readingTime: story.readingTime
-                    }}
-                    size="sm"
-                  />
-                  <ReactionButton
-                    storyId={story.id}
-                    reactionType="liked"
-                    size="sm"
-                    showCount={false}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Enhanced Auto-play Indicator */}
-          {autoplayMode !== 'disabled' && (
-            <div className="fixed top-20 left-1/2 -translate-x-1/2 z-40 bg-purple-500/10 border border-purple-500/20 rounded-lg px-4 py-2 backdrop-blur-sm">
-              <div className="flex items-center space-x-3 text-purple-300">
-                <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium">
-                  Auto-playing ({autoplayMode})
-                </span>
-                <div className="w-16 h-1 bg-purple-500/20 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-purple-400 transition-all duration-100"
-                    style={{ width: `${autoplayProgress}%` }}
-                  ></div>
-                </div>
-                <span className="text-xs text-purple-400">
-                  {Math.ceil((story.blocks.length - currentBlock - 1) * 2)}s remaining
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Autoplay Intro Modal */}
-          {showAutoplayIntro && (
-            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 max-w-md w-full">
-                <div className="text-center mb-6">
-                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-cyan-500 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <Play className="h-8 w-8 text-white" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-white mb-2">Choose Auto-play Speed</h2>
-                  <p className="text-gray-300 text-sm">
-                    Let the story unfold automatically at your preferred pace
-                  </p>
-                </div>
-
-                <div className="space-y-3 mb-6">
-                  <Button 
-                    onClick={() => startAutoplay('slow')}
-                    className="w-full py-4 text-left bg-white/5 hover:bg-white/10 border border-white/10 text-white"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                      <div>
-                        <div className="font-semibold">Slow & Thoughtful</div>
-                        <div className="text-xs text-gray-400">~4-6 seconds per block</div>
-                      </div>
-                    </div>
-                  </Button>
-
-                  <Button 
-                    onClick={() => startAutoplay('normal')}
-                    className="w-full py-4 text-left bg-white/5 hover:bg-white/10 border border-white/10 text-white"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
-                      <div>
-                        <div className="font-semibold">Normal Pace</div>
-                        <div className="text-xs text-gray-400">~3-4 seconds per block</div>
-                      </div>
-                    </div>
-                  </Button>
-
-                  <Button 
-                    onClick={() => startAutoplay('fast')}
-                    className="w-full py-4 text-left bg-white/5 hover:bg-white/10 border border-white/10 text-white"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-3 h-3 bg-orange-400 rounded-full"></div>
-                      <div>
-                        <div className="font-semibold">Quick Read</div>
-                        <div className="text-xs text-gray-400">~2-3 seconds per block</div>
-                      </div>
-                    </div>
-                  </Button>
-                </div>
-
-                <Button 
-                  variant="outline"
-                  onClick={() => setShowAutoplayIntro(false)}
-                  className="w-full py-3 border-white/20 text-white hover:bg-white/10"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          )}
-
-      {/* Story Content */}
-      <div className={cn(
-        "container mx-auto py-16 px-4",
-        isFocusMode ? "pt-4 pb-4" : "pt-24 pb-24"
-      )}>
-        <div className="max-w-4xl mx-auto">
-          {story.blocks.map((block, index) => (
-            <div
-              key={index}
-              className={cn(
-                "story-block transition-all duration-1000 ease-out",
-                index === currentBlock 
-                  ? "opacity-100 transform translate-y-0 scale-100" 
-                  : index < currentBlock 
-                    ? "opacity-30 transform -translate-y-4 scale-95" 
-                    : "opacity-0 transform translate-y-8 scale-95"
-              )}
-            >
-                  <StoryBlockRenderer 
-                    block={block} 
-                    enableTyping={!ttsEnabled}
-                    typingSpeed={typingSpeed}
-                    onTypingCharacter={playTypingSound}
-                  />
-              
-              {/* TTS for current block */}
-              {index === currentBlock && ttsEnabled && (
-                <div className="mt-4 flex justify-center">
-                  <TextToSpeech
-                    text={getBlockText(block)}
-                    storyId={story.id}
-                    blockIndex={index}
-                    autoPlay={false}
-                  />
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Bottom Controls */}
-      {!isFocusMode && (
-        <div className={cn(
-          "fixed bottom-0 left-0 right-0 z-50 p-4 bg-black/80 backdrop-blur-sm border-t border-white/10 transition-all duration-300",
-          showControls ? "translate-y-0" : "translate-y-full"
-        )}>
-          <div className="container mx-auto">
-            {/* Progress Bar */}
-            <div className="w-full bg-white/10 rounded-full h-2 mb-4">
-              <div
-                ref={progressRef}
-                className="bg-gradient-to-r from-purple-500 to-cyan-500 h-2 rounded-full transition-all duration-500 ease-out"
-                style={{ width: `${progressPercentage}%` }}
-              />
+      {/* Focus Mode UI */}
+      {isFocusMode && (
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="text-center max-w-2xl mx-auto px-8">
+            <div className="mb-8">
+              <h2 className="text-3xl font-bold text-white mb-4">Focus Mode</h2>
+              <p className="text-white/70 text-lg">
+                Immersive reading experience with minimal distractions
+              </p>
             </div>
             
-            {/* Navigation Controls */}
-            <div className="flex justify-between items-center">
-              <Button 
-                variant="ghost" 
-                onClick={() => navigateBlocks('prev')} 
-                disabled={currentBlock === 0}
-                className="text-white hover:bg-white/10 disabled:opacity-50"
-              >
-                <ArrowLeft className="h-5 w-5 mr-2" /> Previous
-              </Button>
-              
-              <div className="text-center">
-                <div className="text-sm text-white/70 mb-1">
-                  {currentBlock + 1} of {story.blocks.length}
-                </div>
-                <div className="text-xs text-white/50">
-                  {Math.round(progressPercentage)}% complete
-                </div>
+            <div className="space-y-6">
+              <div className="text-white/60">
+                <p className="mb-2">Navigation:</p>
+                <p className="text-sm">← → Arrow keys or swipe on mobile</p>
+                <p className="text-sm">Space bar for next block</p>
               </div>
               
-              <Button 
-                variant="ghost" 
-                onClick={() => navigateBlocks('next')} 
-                disabled={currentBlock === story.blocks.length - 1}
-                className="text-white hover:bg-white/10 disabled:opacity-50"
+              <div className="text-white/60">
+                <p className="mb-2">Controls:</p>
+                <p className="text-sm">Press F or click the eye icon to exit focus mode</p>
+                <p className="text-sm">Press Esc to go back to stories</p>
+              </div>
+            </div>
+            
+            <div className="mt-8 flex justify-center space-x-4">
+              <Button
+                onClick={toggleFocusMode}
+                className="bg-white/10 hover:bg-white/20 text-white border border-white/20"
               >
-                Next <ArrowRight className="h-5 w-5 ml-2" />
+                Exit Focus Mode
+              </Button>
+              <Button
+                onClick={() => window.history.back()}
+                variant="outline"
+                className="border-white/20 text-white hover:bg-white/10"
+              >
+                Back to Stories
               </Button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Focus Mode Exit */}
-      {isFocusMode && (
-        <div className="fixed bottom-4 right-4 z-50">
-          <Button 
-            variant="secondary" 
-            size="icon" 
-            onClick={toggleFocusMode}
-            className="bg-white/10 hover:bg-white/20 text-white border border-white/20"
-          >
-            <X className="h-6 w-6" />
-          </Button>
-        </div>
-      )}
-
-          {/* Story Onboarding */}
-          <StoryOnboarding
-            isOpen={showOnboarding}
-            onComplete={handleOnboardingComplete}
-            onSkip={handleOnboardingSkip}
-          />
-
-          {/* Utility Panel */}
-          <UtilityPanel
-            isOpen={showUtilityPanel}
-            onToggle={() => setShowUtilityPanel(!showUtilityPanel)}
-            autoplayMode={autoplayMode}
-            onAutoplayChange={setAutoplayMode}
-            ttsEnabled={ttsEnabled}
-            onTTSChange={toggleTTS}
-            typingSpeed={typingSpeed}
-            onTypingSpeedChange={setTypingSpeed}
-            focusMode={isFocusMode}
-            onFocusModeChange={setIsFocusMode}
-            currentBlock={currentBlock}
-            totalBlocks={story.blocks.length}
-            onNavigate={navigateBlocks}
-            onReset={handleReset}
-          />
-
-          {/* Keyboard Shortcuts Hint */}
-          {!isFocusMode && showControls && (
-            <div className="fixed bottom-20 right-4 z-40 bg-black/80 backdrop-blur-sm border border-white/10 rounded-lg p-3 text-xs text-white/70">
-              <div className="space-y-1">
-                <div>← → Navigate</div>
-                <div>Space Next</div>
-                <div>F Focus Mode</div>
-                <div>P Auto-play</div>
-                <div>T Text-to-Speech</div>
-                <div>S Settings Panel</div>
+      {/* Standard Mode (Non-Theater) */}
+      {!isTheaterMode && (
+        <div className="relative z-10 min-h-screen bg-cinematic-bg flex flex-col">
+          {/* Standard Navigation */}
+          <div className="fixed top-0 left-0 right-0 z-50 bg-cinematic-surface/90 backdrop-blur-xl border-b border-cinematic-border/50">
+            <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+              <Button
+                variant="ghost"
+                onClick={() => window.history.back()}
+                className="text-cinematic-text hover:text-cinematic-accent"
+              >
+                <ArrowLeft className="h-5 w-5 mr-2" />
+                Back to Stories
+              </Button>
+              
+              <h1 className="text-lg font-bold text-cinematic-text truncate max-w-md">
+                {story.title}
+              </h1>
+              
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleTheaterMode}
+                  className="text-cinematic-text hover:text-cinematic-accent"
+                  title="Enter Theater Mode"
+                >
+                  <Eye className="h-5 w-5" />
+                </Button>
               </div>
             </div>
-          )}
+          </div>
+
+          {/* Standard Content - Main Content Area */}
+          <main className="flex-1 pt-20 pb-20">
+            <div className="container mx-auto px-4 max-w-4xl">
+              <div className="space-y-8">
+                {story.blocks.map((block, index) => (
+                  <div
+                    key={index}
+                    className={cn(
+                      "transition-all duration-500",
+                      index === currentBlock 
+                        ? "opacity-100 transform translate-y-0" 
+                        : index < currentBlock 
+                          ? "opacity-30 transform -translate-y-4" 
+                          : "opacity-0 transform translate-y-8"
+                    )}
+                  >
+                    <StoryBlockRenderer 
+                      block={block} 
+                      enableTyping={index === currentBlock}
+                      typingSpeed={50}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </main>
+
+          {/* Standard Bottom Controls */}
+          <div className="fixed bottom-0 left-0 right-0 bg-cinematic-surface/90 backdrop-blur-xl border-t border-cinematic-border/50 z-40">
+            <div className="container mx-auto px-4 py-4">
+              <div className="flex justify-between items-center">
+                <Button 
+                  variant="ghost" 
+                  onClick={prevBlock} 
+                  disabled={currentBlock === 0}
+                  className="text-cinematic-text hover:text-cinematic-accent disabled:opacity-50"
+                >
+                  <ArrowLeft className="h-5 w-5 mr-2" /> Previous
+                </Button>
+                
+                <div className="text-center">
+                  <div className="text-sm text-cinematic-text/70">
+                    {currentBlock + 1} of {story.blocks.length}
+                  </div>
+                  <div className="text-xs text-cinematic-text/50">
+                    {Math.round(progressPercentage)}% complete
+                  </div>
+                </div>
+                
+                <Button 
+                  variant="ghost" 
+                  onClick={nextBlock} 
+                  disabled={currentBlock === story.blocks.length - 1}
+                  className="text-cinematic-text hover:text-cinematic-accent disabled:opacity-50"
+                >
+                  Next <ArrowRight className="h-5 w-5 ml-2" />
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
-      )
-    }
+      )}
+    </div>
+  )
+}

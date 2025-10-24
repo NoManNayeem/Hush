@@ -47,72 +47,83 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-black">
-      {/* Cinematic Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-black to-cyan-900/20"></div>
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-black/50 to-black"></div>
+    <div className="min-h-screen relative overflow-hidden bg-cinematic-bg">
+      {/* Enhanced Cinematic Background */}
+      <div className="absolute inset-0 immersive-bg animate-cinematic-bg"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-cinematic-bg/50 to-cinematic-bg"></div>
       
-      {/* Animated Particles - Client-side only */}
+      {/* Enhanced Animated Particles */}
       <div className="absolute inset-0">
-        <ParticleBackground />
+        <ParticleBackground count={50} opacity={0.15} />
       </div>
 
       <Navbar />
       
       <main className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 text-center">
-        {/* Hero Logo */}
-        <div className="relative z-10 mb-8">
-          <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-2xl animate-pulse-slow">
-            <span className="text-white font-bold text-4xl">H</span>
-          </div>
-          <div className="absolute -top-2 -right-2">
-            <Sparkles className="h-6 w-6 text-yellow-400 animate-pulse" />
+        {/* Enhanced Hero Logo */}
+        <div className="relative z-10 mb-12 animate-cinematic-fade-in">
+          <div className="relative">
+            <div className="w-32 h-32 bg-gradient-to-br from-cinematic-accent to-cinematic-accent-secondary rounded-3xl flex items-center justify-center shadow-2xl animate-cinematic-glow">
+              <span className="text-white font-bold text-5xl display-text">H</span>
+            </div>
+            <div className="absolute -top-3 -right-3">
+              <Sparkles className="h-8 w-8 text-cinematic-accent-secondary animate-pulse" />
+            </div>
+            <div className="absolute -bottom-2 -left-2">
+              <div className="w-6 h-6 bg-cinematic-accent rounded-full animate-ping"></div>
+            </div>
           </div>
         </div>
 
-        {/* Hero Text */}
+        {/* Enhanced Hero Text */}
         <div className={`transition-all duration-2000 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 max-w-4xl leading-tight">
+          <h1 className="text-5xl md:text-7xl font-bold text-cinematic-text mb-8 max-w-5xl leading-tight display-text">
             Some stories are meant to be
             <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cinematic-accent to-cinematic-accent-secondary animate-shimmer">
               heard in whispers
             </span>
           </h1>
-          <p className="text-xl text-gray-300 mb-8 max-w-2xl leading-relaxed">
-            An open archive of fictional theories, mysteries, and stories — told interactively through immersive storyboards.
+          <p className="text-xl md:text-2xl text-cinematic-text-muted mb-12 max-w-3xl leading-relaxed serif-text">
+            An open archive of fictional theories, mysteries, and stories — told interactively through immersive storyboards that blur the line between reality and imagination.
           </p>
         </div>
 
-        {/* CTA Button */}
+        {/* Enhanced CTA Button */}
         <div className={`transition-all duration-2000 delay-500 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           <Button
             size="lg"
-            className="group bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+            className="group cinematic-button px-12 py-6 text-xl font-bold rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-110"
             onClick={handleGetStarted}
           >
-            <Play className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
+            <Play className="mr-3 h-6 w-6 group-hover:scale-110 transition-transform" />
             Begin Your Journey
-            <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+            <ArrowRight className="ml-3 h-6 w-6 group-hover:translate-x-1 transition-transform" />
           </Button>
         </div>
 
-        {/* Feature Cards */}
-        <div className={`mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl transition-all duration-2000 delay-1000 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <div className="text-center p-6 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all duration-300 hover:scale-105">
-            <div className="text-3xl mb-4">🎬</div>
-            <h3 className="text-lg font-semibold text-white mb-2">Cinematic Stories</h3>
-            <p className="text-sm text-gray-300">Stories unfold with animations, imagery, and immersive experiences</p>
+        {/* Enhanced Feature Cards */}
+        <div className={`mt-20 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl transition-all duration-2000 delay-1000 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          <div className="text-center p-8 rounded-2xl cinematic-card hover:cinematic-glow transition-all duration-500 hover:scale-105 group">
+            <div className="text-5xl mb-6 group-hover:scale-110 transition-transform duration-300">🎬</div>
+            <h3 className="text-2xl font-bold text-cinematic-text mb-4 display-text">Cinematic Stories</h3>
+            <p className="text-base text-cinematic-text-muted leading-relaxed serif-text">
+              Stories unfold with professional animations, immersive imagery, and cinematic effects that transport you into the narrative.
+            </p>
           </div>
-          <div className="text-center p-6 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all duration-300 hover:scale-105">
-            <div className="text-3xl mb-4">🔍</div>
-            <h3 className="text-lg font-semibold text-white mb-2">Interactive Discovery</h3>
-            <p className="text-sm text-gray-300">Navigate through conspiracy theories, mysteries, and thought experiments</p>
+          <div className="text-center p-8 rounded-2xl cinematic-card hover:cinematic-glow transition-all duration-500 hover:scale-105 group">
+            <div className="text-5xl mb-6 group-hover:scale-110 transition-transform duration-300">🔍</div>
+            <h3 className="text-2xl font-bold text-cinematic-text mb-4 display-text">Interactive Discovery</h3>
+            <p className="text-base text-cinematic-text-muted leading-relaxed serif-text">
+              Navigate through conspiracy theories, mysteries, and thought experiments with intuitive controls and immersive navigation.
+            </p>
           </div>
-          <div className="text-center p-6 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all duration-300 hover:scale-105">
-            <div className="text-3xl mb-4">🌐</div>
-            <h3 className="text-lg font-semibold text-white mb-2">Open Archive</h3>
-            <p className="text-sm text-gray-300">Community-driven collection of fictional stories and theories</p>
+          <div className="text-center p-8 rounded-2xl cinematic-card hover:cinematic-glow transition-all duration-500 hover:scale-105 group">
+            <div className="text-5xl mb-6 group-hover:scale-110 transition-transform duration-300">🌐</div>
+            <h3 className="text-2xl font-bold text-cinematic-text mb-4 display-text">Open Archive</h3>
+            <p className="text-base text-cinematic-text-muted leading-relaxed serif-text">
+              Community-driven collection of fictional stories and theories, continuously expanding with new immersive narratives.
+            </p>
           </div>
         </div>
       </main>

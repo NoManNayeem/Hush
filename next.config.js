@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const isProduction = process.env.NODE_ENV === 'production'
-const hasBasePath = process.env.NEXT_PUBLIC_BASE_PATH
+const isGitHubPages = process.env.GITHUB_ACTIONS === 'true'
 
 const nextConfig = {
   output: 'export',
@@ -11,9 +11,11 @@ const nextConfig = {
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
-  // Always use basePath for GitHub Pages deployment
-  basePath: '/Hush',
-  assetPrefix: '/Hush/',
+  // Only use basePath for GitHub Pages deployment
+  ...(isGitHubPages && {
+    basePath: '/Hush',
+    assetPrefix: '/Hush/',
+  }),
       // Performance optimizations
       experimental: {
         optimizeCss: true,

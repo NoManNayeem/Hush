@@ -50,6 +50,18 @@ const config: Config = {
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
         },
+        // Cinematic Color Palette
+        'cinematic-bg': 'hsl(var(--cinematic-bg))',
+        'cinematic-surface': 'hsl(var(--cinematic-surface))',
+        'cinematic-surface-hover': 'hsl(var(--cinematic-surface-hover))',
+        'cinematic-border': 'hsl(var(--cinematic-border))',
+        'cinematic-text': 'hsl(var(--cinematic-text))',
+        'cinematic-text-muted': 'hsl(var(--cinematic-text-muted))',
+        'cinematic-accent': 'hsl(var(--cinematic-accent))',
+        'cinematic-accent-secondary': 'hsl(var(--cinematic-accent-secondary))',
+        'cinematic-danger': 'hsl(var(--cinematic-danger))',
+        'cinematic-warning': 'hsl(var(--cinematic-warning))',
+        'cinematic-success': 'hsl(var(--cinematic-success))',
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -59,6 +71,9 @@ const config: Config = {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         serif: ['Crimson Text', 'Georgia', 'serif'],
+        display: ['Playfair Display', 'serif'],
+        body: ['Inter', 'sans-serif'],
+        mono: ['Source Code Pro', 'monospace'],
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
