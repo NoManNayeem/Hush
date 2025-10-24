@@ -21,6 +21,8 @@ interface StoryboardProps {
 }
 
 export default function Storyboard({ story }: StoryboardProps) {
+  console.log('Storyboard rendering with story:', story.id, 'blocks:', story.blocks.length)
+  
   const [currentBlock, setCurrentBlock] = useState(0)
   const [isFocusMode, setIsFocusMode] = useState(false)
   // const [isBookmarked, setIsBookmarked] = useState(false)
@@ -82,6 +84,7 @@ export default function Storyboard({ story }: StoryboardProps) {
   }
 
   const nextBlock = () => {
+    console.log('nextBlock called, currentBlock:', currentBlock, 'total blocks:', story.blocks.length)
     if (currentBlock < story.blocks.length - 1) {
       transitionToBlock(currentBlock + 1, 'next')
     }
@@ -242,41 +245,45 @@ export default function Storyboard({ story }: StoryboardProps) {
     return () => clearTimeout(hideTimeout)
   }, [currentBlock])
 
-  // Enhanced autoplay system with better UX
+  // Fixed autoplay system
   useEffect(() => {
-    if (autoplayMode !== 'disabled') {
-      const getBlockReadTime = (block: StoryBlock | undefined): number => {
-        if (!block) return 3000;
-        // Base reading time calculation
+    // Clear any existing autoplay
+    if (autoPlayRef.current) {
+      clearTimeout(autoPlayRef.current)
+      autoPlayRef.current = null
+    }
+
+    if (autoplayMode !== 'disabled' && currentBlock < story.blocks.length - 1) {
+      console.log('Starting autoplay for block:', currentBlock, 'mode:', autoplayMode)
+      
+      const getBlockReadTime = (block: StoryBlock): number => {
         let baseTime = 3000 // Default 3 seconds
         
         switch (block.type) {
           case 'heading':
+            baseTime = 4000
+            break
           case 'subheading':
-            baseTime = 2000
+            baseTime = 3500
             break
           case 'paragraph':
-            const wordCount = block.text?.split(' ').length || 0
+            const text = (block as any).text || ''
+            const wordCount = text.split(' ').length
             baseTime = Math.max(3000, wordCount * 150) // 150ms per word
             break
           case 'image':
-            baseTime = 4000
-            break
           case 'video':
-            baseTime = 8000 // Shorter for autoplay
-            break
           case 'mermaid':
           case 'reactflow':
-            baseTime = 5000
-            break
           case 'three-scene':
+          case 'embed':
             baseTime = 6000
             break
           case 'quote':
             baseTime = 4000
             break
           case 'code':
-            baseTime = 3500
+            baseTime = 5000
             break
         }
 
@@ -284,72 +291,51 @@ export default function Storyboard({ story }: StoryboardProps) {
         const speedMultipliers = {
           'slow': 1.5,
           'normal': 1.0,
-          'fast': 0.6
+          'fast': 0.7
         }
         
-        return Math.round(baseTime * speedMultipliers[autoplayMode])
+        return Math.ceil(baseTime * speedMultipliers[autoplayMode])
       }
 
-      const scheduleNextBlock = () => {
-        if (currentBlock < story.blocks.length - 1) {
-          const nextBlock = story.blocks[currentBlock + 1]
-          const readTime = getBlockReadTime(nextBlock)
-          
-          // Update progress and handle auto-scroll
-          setAutoplayProgress(0)
-          const progressInterval = setInterval(() => {
-            setAutoplayProgress(prev => {
-              const newProgress = prev + (100 / (readTime / 100))
-              return newProgress >= 100 ? 100 : newProgress
-            })
-          }, 100)
+      const currentBlockData = story.blocks[currentBlock]
+      if (!currentBlockData) return
+      
+      const readTime = getBlockReadTime(currentBlockData)
+      
+      // Reset progress
+      setAutoplayProgress(0)
+      
+      // Animate progress
+      let startTime = Date.now()
+      const progressInterval = setInterval(() => {
+        const elapsed = Date.now() - startTime
+        const progress = Math.min(100, (elapsed / readTime) * 100)
+        setAutoplayProgress(progress)
+        
+        if (progress >= 100) {
+          clearInterval(progressInterval)
+        }
+      }, 50)
 
-          // Auto-scroll during autoplay with smooth timing
-          const scrollInterval = setInterval(() => {
-            if (containerRef.current) {
-              const currentBlockElement = containerRef.current.querySelector(`[data-block-index="${currentBlock}"]`)
-              if (currentBlockElement) {
-                const rect = currentBlockElement.getBoundingClientRect()
-                const viewportHeight = window.innerHeight
-                const elementCenter = rect.top + rect.height / 2
-                const viewportCenter = viewportHeight / 2
-                
-                // Only scroll if element is not well-centered
-                if (Math.abs(elementCenter - viewportCenter) > 100) {
-                  currentBlockElement.scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'center',
-                    inline: 'center'
-                  } as ScrollIntoViewOptions)
-                }
-              }
-            }
-          }, 500) // Check every 500ms during autoplay
-          
-          autoPlayRef.current = setTimeout(() => {
-            clearInterval(progressInterval)
-            clearInterval(scrollInterval)
-            setCurrentBlock(prev => prev + 1)
-            scheduleNextBlock()
-          }, readTime)
+      // Schedule next block
+      autoPlayRef.current = setTimeout(() => {
+        clearInterval(progressInterval)
+        if (currentBlock < story.blocks.length - 1) {
+          nextBlock()
         } else {
           // Story finished
           setAutoplayMode('disabled')
           setAutoplayProgress(0)
         }
-      }
-
-      scheduleNextBlock()
+      }, readTime)
     } else {
-      if (autoPlayRef.current) {
-        clearTimeout(autoPlayRef.current)
-      }
       setAutoplayProgress(0)
     }
 
     return () => {
       if (autoPlayRef.current) {
         clearTimeout(autoPlayRef.current)
+        autoPlayRef.current = null
       }
     }
   }, [autoplayMode, currentBlock, story.blocks])
