@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Search, Menu, X, Home, BookOpen, Info, AlertTriangle, Volume2, VolumeX, Settings } from 'lucide-react'
+import { Search, Menu, X, Home, BookOpen, Info, AlertTriangle, Volume2, VolumeX } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { audioManager } from '@/lib/audio'
 

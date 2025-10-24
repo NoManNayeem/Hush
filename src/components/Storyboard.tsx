@@ -6,7 +6,7 @@ import { saveReadingProgress, loadReadingProgress } from '@/lib/storage'
 import StoryBlockRenderer from './StoryBlockRenderer'
 import ParticleBackground from './ParticleBackground'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, ArrowRight, Play, Pause, Volume2, VolumeX, Settings, SkipForward, SkipBack, Eye, EyeOff, Home } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Play, Pause, Volume2, VolumeX, SkipForward, SkipBack, Eye, EyeOff, Home } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface StoryboardProps {
@@ -336,11 +336,13 @@ export default function Storyboard({ story }: StoryboardProps) {
             "transition-all duration-500 ease-in-out",
             isTransitioning ? "opacity-0 scale-95" : "opacity-100 scale-100"
           )}>
-            <StoryBlockRenderer 
-              block={story.blocks[currentBlock]} 
-              enableTyping={true}
-              typingSpeed={50}
-            />
+            {story.blocks[currentBlock] && (
+              <StoryBlockRenderer 
+                block={story.blocks[currentBlock]} 
+                enableTyping={true}
+                typingSpeed={50}
+              />
+            )}
           </div>
         </div>
       </div>
