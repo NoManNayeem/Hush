@@ -79,8 +79,9 @@ export default function UtilityPanel({
         size="icon"
         onClick={onToggle}
         className={cn(
-          "fixed top-4 right-4 z-50 bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 transition-all duration-300",
-          isOpen && "bg-purple-500/20 border-purple-500/30"
+          "fixed top-4 right-4 z-[70] bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 transition-all duration-300",
+          isOpen && "bg-purple-500/20 border-purple-500/30",
+          "md:top-4 md:right-4 top-16 right-4" // Mobile positioning
         )}
         aria-label={isOpen ? "Close utility panel" : "Open utility panel"}
       >
@@ -89,11 +90,11 @@ export default function UtilityPanel({
 
       {/* Side Panel */}
       <div className={cn(
-        "fixed top-0 right-0 h-full bg-black/90 backdrop-blur-md border-l border-white/10 z-40 transition-all duration-300 ease-in-out",
+        "fixed top-0 right-0 h-full bg-black/90 backdrop-blur-md border-l border-white/10 z-[65] transition-all duration-300 ease-in-out",
         isOpen 
           ? "translate-x-0" 
           : "translate-x-full",
-        isMinimized ? "w-16" : "w-80"
+        isMinimized ? "w-16" : "w-80 md:w-80 w-full max-w-sm"
       )}>
         <div className="flex flex-col h-full">
           {/* Header */}

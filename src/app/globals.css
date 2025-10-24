@@ -329,7 +329,7 @@
   }
 }
 
-/* Cinematic UI Styles */
+/* TV Screen Experience Styles */
 .cinematic-viewport {
   position: fixed;
   top: 0;
@@ -338,6 +338,41 @@
   height: 100vh;
   overflow: hidden;
   background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+  
+  /* TV Screen Effects */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.3) 100%),
+      linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.02) 50%, transparent 100%);
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.1) 2px,
+        rgba(0,0,0,0.1) 4px
+      );
+    pointer-events: none;
+    z-index: 2;
+    animation: tv-scanlines 0.1s linear infinite;
+  }
 }
 
 .cinematic-content-area {
@@ -605,4 +640,349 @@
     opacity: 0;
     transform: rotateY(90deg);
   }
+}
+
+/* TV Screen Effects */
+@keyframes tv-scanlines {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(4px); }
+}
+
+@keyframes tv-flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.98; }
+}
+
+@keyframes tv-static {
+  0% { background-position: 0 0; }
+  100% { background-position: 20px 20px; }
+}
+
+@keyframes dramatic-zoom {
+  0% { 
+    transform: scale(1.1) rotate(0.5deg);
+    filter: brightness(1.2) contrast(1.1);
+  }
+  50% { 
+    transform: scale(1.05) rotate(-0.3deg);
+    filter: brightness(1.1) contrast(1.05);
+  }
+  100% { 
+    transform: scale(1) rotate(0deg);
+    filter: brightness(1) contrast(1);
+  }
+}
+
+@keyframes dramatic-slide {
+  0% { 
+    transform: translateX(100%) scale(0.9);
+    filter: blur(2px) brightness(0.8);
+  }
+  50% { 
+    transform: translateX(50%) scale(0.95);
+    filter: blur(1px) brightness(0.9);
+  }
+  100% { 
+    transform: translateX(0) scale(1);
+    filter: blur(0) brightness(1);
+  }
+}
+
+@keyframes dramatic-fade {
+  0% { 
+    opacity: 0;
+    transform: scale(1.1);
+    filter: brightness(1.3) saturate(1.2);
+  }
+  50% { 
+    opacity: 0.5;
+    transform: scale(1.05);
+    filter: brightness(1.1) saturate(1.1);
+  }
+  100% { 
+    opacity: 1;
+    transform: scale(1);
+    filter: brightness(1) saturate(1);
+  }
+}
+
+@keyframes tv-glow {
+  0%, 100% { 
+    box-shadow: 
+      0 0 20px rgba(139, 92, 246, 0.3),
+      0 0 40px rgba(6, 182, 212, 0.2),
+      inset 0 0 20px rgba(255, 255, 255, 0.05);
+  }
+  50% { 
+    box-shadow: 
+      0 0 30px rgba(139, 92, 246, 0.5),
+      0 0 60px rgba(6, 182, 212, 0.3),
+      inset 0 0 30px rgba(255, 255, 255, 0.1);
+  }
+}
+
+@keyframes atmospheric-pulse {
+  0%, 100% { 
+    background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+  }
+  50% { 
+    background: linear-gradient(135deg, #1a1a2e 0%, #2a2a3e 50%, #262a4e 100%);
+  }
+}
+
+/* Mobile Responsive Improvements */
+@media (max-width: 768px) {
+  .cinematic-viewport {
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height for mobile */
+  }
+  
+  .cinematic-content-area {
+    padding: 1rem;
+  }
+  
+  .cinematic-blocks-container {
+    max-width: 100%;
+    padding: 0 1rem;
+  }
+  
+  .cinematic-nav-arrow {
+    width: 40px;
+    height: 40px;
+    left: 8px;
+    right: 8px;
+  }
+  
+  .cinematic-nav-arrow.left {
+    left: 8px;
+  }
+  
+  .cinematic-nav-arrow.right {
+    right: 8px;
+  }
+  
+  .cinematic-counter {
+    top: 12px;
+    right: 12px;
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+  
+  .cinematic-controls {
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 6px;
+    gap: 6px;
+  }
+  
+  .cinematic-control-button {
+    width: 28px;
+    height: 28px;
+  }
+  
+  /* Mobile utility panel improvements */
+  .utility-panel-mobile {
+    width: 100vw;
+    max-width: 100vw;
+  }
+  
+  /* Mobile navigation improvements */
+  .mobile-nav-controls {
+    position: fixed;
+    bottom: 80px;
+    left: 16px;
+    right: 16px;
+    z-index: 60;
+  }
+  
+  /* Touch-friendly button sizes */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Mobile progress bar */
+  .cinematic-progress {
+    height: 3px;
+  }
+  
+  /* Mobile block counter */
+  .cinematic-counter {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+}
+
+/* Tablet responsive improvements */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .cinematic-nav-arrow {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .cinematic-controls {
+    bottom: 16px;
+  }
+  
+  .cinematic-counter {
+    top: 16px;
+    right: 16px;
+  }
+}
+
+/* Large screen improvements */
+@media (min-width: 1025px) {
+  .cinematic-blocks-container {
+    max-width: 1400px;
+  }
+  
+  .cinematic-nav-arrow {
+    width: 52px;
+    height: 52px;
+  }
+  
+  .cinematic-nav-arrow:hover {
+    transform: translateY(-50%) scale(1.15);
+  }
+}
+
+/* TV Screen Experience Classes */
+.tv-screen-effects {
+  animation: atmospheric-pulse 4s ease-in-out infinite;
+}
+
+.tv-glow-effect {
+  animation: tv-glow 3s ease-in-out infinite;
+}
+
+.tv-block-effect {
+  filter: contrast(1.1) brightness(1.05);
+  box-shadow: 
+    0 0 30px rgba(139, 92, 246, 0.2),
+    0 0 60px rgba(6, 182, 212, 0.1);
+}
+
+.atmospheric-lighting {
+  background: 
+    radial-gradient(ellipse at 30% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(6, 182, 212, 0.1) 0%, transparent 50%),
+    linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+}
+
+.dramatic-slide {
+  animation: dramatic-slide 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.dramatic-fade {
+  animation: dramatic-fade 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.dramatic-zoom {
+  animation: dramatic-zoom 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* TV Remote Styling */
+.tv-remote-controls {
+  background: linear-gradient(145deg, #1a1a2e, #16213e);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.tv-remote-button {
+  background: linear-gradient(145deg, #2a2a3e, #1a1a2e);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+}
+
+.tv-remote-button:hover {
+  background: linear-gradient(145deg, #3a3a4e, #2a2a3e);
+  box-shadow: 
+    0 6px 12px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.tv-remote-button:active {
+  transform: translateY(0);
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Enhanced TV Effects */
+.tv-static-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(255, 255, 255, 0.03) 2px,
+      rgba(255, 255, 255, 0.03) 4px
+    );
+  animation: tv-static 0.1s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.tv-screen-border {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 3px solid #333;
+  border-radius: 8px;
+  box-shadow: 
+    inset 0 0 20px rgba(0, 0, 0, 0.5),
+    0 0 40px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Thrilling Visual Effects */
+.thrilling-glow {
+  position: relative;
+}
+
+.thrilling-glow::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57);
+  border-radius: inherit;
+  z-index: -1;
+  animation: thrilling-rainbow 3s linear infinite;
+}
+
+@keyframes thrilling-rainbow {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+/* TV Channel Static Effect */
+.tv-channel-static {
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
+  animation: tv-channel-flicker 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes tv-channel-flicker {
+  0% { opacity: 0.8; }
+  100% { opacity: 1; }
 }

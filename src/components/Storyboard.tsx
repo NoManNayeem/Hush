@@ -40,10 +40,13 @@ export default function Storyboard({ story }: StoryboardProps) {
   
   // Cinematic UI state
   const [isCinematicMode, setIsCinematicMode] = useState(true)
-  // const [transitionType, setTransitionType] = useState<'slide' | 'fade' | 'zoom' | 'flip'>('slide')
+  const [transitionType, setTransitionType] = useState<'slide' | 'fade' | 'zoom' | 'flip'>('slide')
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [showProgressBar, setShowProgressBar] = useState(true)
   const [showBlockCounter, setShowBlockCounter] = useState(true)
+  const [tvEffects, setTvEffects] = useState(true)
+  const [atmosphericMode, setAtmosphericMode] = useState(true)
+  const [soundEffects, setSoundEffects] = useState(true)
   const containerRef = useRef<HTMLDivElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null)
@@ -53,21 +56,29 @@ export default function Storyboard({ story }: StoryboardProps) {
   // TTS hook
   const { isEnabled: ttsEnabled, toggleTTS } = useStoryTTS(story.id)
 
-  // Cinematic transition manager
+  // TV-Style transition manager with dramatic effects
   const transitionToBlock = async (newBlock: number, _direction: 'next' | 'prev' = 'next') => {
     if (isTransitioning || newBlock < 0 || newBlock >= story.blocks.length) return
     
     setIsTransitioning(true)
     
-    // Add transition delay for cinematic effect
-    await new Promise(resolve => setTimeout(resolve, 300))
+    // Play transition sound
+    playTransitionSound()
+    
+    // Add dramatic transition delay
+    await new Promise(resolve => setTimeout(resolve, 500))
     
     setCurrentBlock(newBlock)
+    
+    // Play TV static sound for effect
+    if (tvEffects) {
+      playTvStaticSound()
+    }
     
     // Transition completion
     setTimeout(() => {
       setIsTransitioning(false)
-    }, 800)
+    }, 1000)
   }
 
   const nextBlock = () => {
@@ -82,9 +93,9 @@ export default function Storyboard({ story }: StoryboardProps) {
     }
   }
 
-  // Typing sound effect
+  // TV Sound Effects
   const playTypingSound = () => {
-    if (audioContextRef.current) {
+    if (audioContextRef.current && soundEffects) {
       const oscillator = audioContextRef.current.createOscillator()
       const gainNode = audioContextRef.current.createGain()
       
@@ -96,6 +107,44 @@ export default function Storyboard({ story }: StoryboardProps) {
       
       gainNode.gain.setValueAtTime(0.1, audioContextRef.current.currentTime)
       gainNode.gain.exponentialRampToValueAtTime(0.01, audioContextRef.current.currentTime + 0.1)
+      
+      oscillator.start()
+      oscillator.stop(audioContextRef.current.currentTime + 0.1)
+    }
+  }
+
+  const playTransitionSound = () => {
+    if (audioContextRef.current && soundEffects) {
+      const oscillator = audioContextRef.current.createOscillator()
+      const gainNode = audioContextRef.current.createGain()
+      
+      oscillator.connect(gainNode)
+      gainNode.connect(audioContextRef.current.destination)
+      
+      oscillator.type = 'sawtooth'
+      oscillator.frequency.setValueAtTime(200, audioContextRef.current.currentTime)
+      oscillator.frequency.exponentialRampToValueAtTime(400, audioContextRef.current.currentTime + 0.3)
+      
+      gainNode.gain.setValueAtTime(0.03, audioContextRef.current.currentTime)
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContextRef.current.currentTime + 0.3)
+      
+      oscillator.start()
+      oscillator.stop(audioContextRef.current.currentTime + 0.3)
+    }
+  }
+
+  const playTvStaticSound = () => {
+    if (audioContextRef.current && soundEffects) {
+      const oscillator = audioContextRef.current.createOscillator()
+      const gainNode = audioContextRef.current.createGain()
+      
+      oscillator.connect(gainNode)
+      gainNode.connect(audioContextRef.current.destination)
+      
+      oscillator.type = 'sawtooth'
+      oscillator.frequency.setValueAtTime(1000 + Math.random() * 2000, audioContextRef.current.currentTime)
+      
+      gainNode.gain.setValueAtTime(0.01, audioContextRef.current.currentTime)
       
       oscillator.start()
       oscillator.stop(audioContextRef.current.currentTime + 0.1)
@@ -307,9 +356,17 @@ export default function Storyboard({ story }: StoryboardProps) {
 
   const navigateBlocks = (direction: 'next' | 'prev') => {
     if (direction === 'next' && currentBlock < story.blocks.length - 1) {
-      setCurrentBlock(currentBlock + 1)
+      if (isCinematicMode) {
+        nextBlock()
+      } else {
+        setCurrentBlock(currentBlock + 1)
+      }
     } else if (direction === 'prev' && currentBlock > 0) {
-      setCurrentBlock(currentBlock - 1)
+      if (isCinematicMode) {
+        prevBlock()
+      } else {
+        setCurrentBlock(currentBlock - 1)
+      }
     }
   }
 
@@ -440,17 +497,20 @@ export default function Storyboard({ story }: StoryboardProps) {
       {/* Animated Particles */}
       <ParticleBackground count={20} opacity={0.1} />
 
-      {/* Cinematic Content Area */}
+      {/* TV Screen Content Area */}
       <div className={cn(
         "absolute inset-0 flex items-center justify-center",
-        isCinematicMode && "cinematic-content-area"
+        isCinematicMode && "cinematic-content-area",
+        tvEffects && "tv-screen-effects",
+        atmosphericMode && "atmospheric-lighting"
       )}>
         {/* Story Blocks Container */}
         <div 
           ref={containerRef}
           className={cn(
             "relative w-full h-full max-w-6xl mx-auto",
-            isCinematicMode && "cinematic-blocks-container"
+            isCinematicMode && "cinematic-blocks-container",
+            tvEffects && "tv-glow-effect"
           )}
         >
           {/* Current Story Block */}
@@ -460,14 +520,19 @@ export default function Storyboard({ story }: StoryboardProps) {
               data-block-index={index}
               className={cn(
                 "absolute inset-0 w-full h-full flex items-center justify-center",
-                "transition-all duration-800 ease-in-out",
+                "transition-all duration-1000 ease-in-out",
                 isCinematicMode && "cinematic-block",
+                tvEffects && "tv-block-effect",
                 index === currentBlock ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full",
-                isTransitioning && "pointer-events-none"
+                isTransitioning && "pointer-events-none",
+                transitionType === 'slide' && index === currentBlock && "dramatic-slide",
+                transitionType === 'fade' && index === currentBlock && "dramatic-fade",
+                transitionType === 'zoom' && index === currentBlock && "dramatic-zoom"
               )}
               style={{
                 transform: index === currentBlock ? 'translateX(0)' : 'translateX(100%)',
-                zIndex: index === currentBlock ? 10 : 1
+                zIndex: index === currentBlock ? 10 : 1,
+                animation: index === currentBlock && tvEffects ? 'tv-flicker 2s ease-in-out infinite' : 'none'
               }}
             >
               <div className="w-full max-w-4xl mx-auto px-8">
@@ -488,7 +553,7 @@ export default function Storyboard({ story }: StoryboardProps) {
         <>
           {/* Progress Bar */}
           {showProgressBar && (
-            <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-white/10">
+            <div className="fixed top-0 left-0 right-0 z-[60] h-1 bg-white/10">
               <div 
                 className="h-full bg-gradient-to-r from-purple-500 to-cyan-500 transition-all duration-300"
                 style={{ width: `${((currentBlock + 1) / story.blocks.length) * 100}%` }}
@@ -498,13 +563,13 @@ export default function Storyboard({ story }: StoryboardProps) {
 
           {/* Block Counter */}
           {showBlockCounter && (
-            <div className="fixed top-4 right-4 z-50 bg-black/50 backdrop-blur-sm rounded-lg px-3 py-1 text-sm text-white">
+            <div className="fixed top-4 right-4 z-[60] bg-black/50 backdrop-blur-sm rounded-lg px-3 py-1 text-sm text-white">
               {currentBlock + 1} / {story.blocks.length}
             </div>
           )}
 
           {/* Navigation Arrows */}
-          <div className="fixed inset-0 z-40 pointer-events-none">
+          <div className="fixed inset-0 z-[55] pointer-events-none">
             {/* Left Arrow */}
             <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-auto">
               <Button
@@ -532,23 +597,64 @@ export default function Storyboard({ story }: StoryboardProps) {
             </div>
           </div>
 
-          {/* Cinematic Controls */}
-          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center space-x-2 bg-black/50 backdrop-blur-sm rounded-lg px-4 py-2 border border-white/20">
+          {/* TV Remote Controls */}
+          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] flex items-center space-x-2 bg-black/70 backdrop-blur-sm rounded-xl px-6 py-3 border border-white/30 shadow-2xl">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setIsCinematicMode(!isCinematicMode)}
-              className="w-8 h-8 text-white hover:bg-white/20"
-              title="Toggle Cinematic Mode"
+              className="w-10 h-10 text-white hover:bg-white/20 rounded-lg"
+              title="Toggle TV Mode"
             >
-              {isCinematicMode ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {isCinematicMode ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </Button>
             
             <Button
               variant="ghost"
               size="icon"
+              onClick={() => setTvEffects(!tvEffects)}
+              className={cn(
+                "w-10 h-10 text-white hover:bg-white/20 rounded-lg",
+                tvEffects && "bg-purple-500/30"
+              )}
+              title="Toggle TV Effects"
+            >
+              <span className="text-sm">📺</span>
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setAtmosphericMode(!atmosphericMode)}
+              className={cn(
+                "w-10 h-10 text-white hover:bg-white/20 rounded-lg",
+                atmosphericMode && "bg-cyan-500/30"
+              )}
+              title="Toggle Atmospheric Lighting"
+            >
+              <span className="text-sm">✨</span>
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSoundEffects(!soundEffects)}
+              className={cn(
+                "w-10 h-10 text-white hover:bg-white/20 rounded-lg",
+                soundEffects && "bg-green-500/30"
+              )}
+              title="Toggle Sound Effects"
+            >
+              <span className="text-sm">🔊</span>
+            </Button>
+
+            <div className="w-px h-6 bg-white/20 mx-2"></div>
+
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setShowProgressBar(!showProgressBar)}
-              className="w-8 h-8 text-white hover:bg-white/20"
+              className="w-10 h-10 text-white hover:bg-white/20 rounded-lg"
               title="Toggle Progress Bar"
             >
               <div className="w-4 h-1 bg-white rounded"></div>
@@ -558,11 +664,51 @@ export default function Storyboard({ story }: StoryboardProps) {
               variant="ghost"
               size="icon"
               onClick={() => setShowBlockCounter(!showBlockCounter)}
-              className="w-8 h-8 text-white hover:bg-white/20"
+              className="w-10 h-10 text-white hover:bg-white/20 rounded-lg"
               title="Toggle Block Counter"
             >
               <span className="text-xs font-mono">#</span>
             </Button>
+
+            <div className="w-px h-6 bg-white/20 mx-2"></div>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTransitionType(transitionType === 'slide' ? 'fade' : transitionType === 'fade' ? 'zoom' : 'slide')}
+              className="w-10 h-10 text-white hover:bg-white/20 rounded-lg"
+              title={`Transition: ${transitionType}`}
+            >
+              <span className="text-xs">
+                {transitionType === 'slide' ? '→' : transitionType === 'fade' ? '○' : '⚡'}
+              </span>
+            </Button>
+          </div>
+
+          {/* Mobile Cinematic Controls */}
+          <div className="fixed bottom-20 left-4 right-4 z-[60] md:hidden">
+            <div className="flex justify-center space-x-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={prevBlock}
+                disabled={currentBlock === 0 || isTransitioning}
+                className="flex-1 bg-black/50 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 disabled:opacity-50"
+              >
+                <ChevronLeft className="h-4 w-4 mr-2" />
+                Previous
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={nextBlock}
+                disabled={currentBlock === story.blocks.length - 1 || isTransitioning}
+                className="flex-1 bg-black/50 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 disabled:opacity-50"
+              >
+                Next
+                <ChevronRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
           </div>
         </>
       )}
