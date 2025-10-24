@@ -6,7 +6,14 @@ Hush is an open-source, immersive storytelling platform that transforms traditio
 
 ## ✨ Features
 
-- **Immersive Storytelling**: Stories unfold with animations, imagery, and interactive elements
+### 🎬 Cinematic TV Experience
+- **TV Screen Effects**: Authentic scanlines, flicker, and static for immersive viewing
+- **Dramatic Transitions**: Slide, fade, zoom, and flip effects with sound
+- **Atmospheric Lighting**: Dynamic backgrounds that pulse and shift
+- **TV Remote Controls**: Intuitive interface for customizing the experience
+- **Auto-play System**: Hands-free story progression with progress tracking
+
+### 📖 Immersive Storytelling
 - **Multiple Block Types**: Text, images, videos, Mermaid diagrams, ReactFlow networks, and 3D scenes
 - **Focus Mode**: Distraction-free reading experience
 - **Bookmarks & Reactions**: Save favorites and react with emojis
@@ -76,11 +83,13 @@ For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md).
 
 ## 🎬 Features
 
-### Cinematic Storytelling
-- **Immersive Storyboards**: Stories unfold with smooth animations and transitions
-- **Focus Mode**: Distraction-free reading experience
-- **Auto-play**: Hands-free story progression
-- **Keyboard Navigation**: Arrow keys, space bar, and shortcuts
+### 🎬 Cinematic TV Experience
+- **TV Screen Effects**: Authentic scanlines, flicker, and static for immersive viewing
+- **Dramatic Transitions**: Slide, fade, zoom, and flip effects with sound
+- **Atmospheric Lighting**: Dynamic backgrounds that pulse and shift
+- **TV Remote Controls**: Intuitive interface for customizing the experience
+- **Auto-play System**: Hands-free story progression with progress tracking
+- **Sound Effects**: Transition sounds, TV static, and typing audio feedback
 
 ### Interactive Elements
 - **Multiple Block Types**: Text, images, videos, Mermaid diagrams, ReactFlow networks, 3D scenes
@@ -166,19 +175,29 @@ Hush/
 
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
-- `npm run export` - Export static site
+- `npm run build:export` - Build and export static site
 - `npm run gen:index` - Generate story index
 - `npm run gen:sitemap` - Generate sitemap
+- `npm run lint` - Run ESLint
+- `npm run lint:fix` - Fix ESLint issues
+- `npm run type-check` - Run TypeScript type checking
+- `npm run analyze` - Analyze bundle size
+- `npm run clean` - Clean build artifacts
+- `npm run preview` - Preview production build
+- `npm run validate` - Run type check and linting
 
 ### Tech Stack
 
 - **Framework**: Next.js 15 with App Router
 - **Styling**: Tailwind CSS + shadcn/ui
-- **Animation**: GSAP + ScrollTrigger
+- **Animation**: GSAP + ScrollTrigger + CSS Animations
 - **3D**: Three.js + @react-three/fiber
 - **Diagrams**: Mermaid + ReactFlow
 - **Search**: Fuse.js
-- **Icons**: React Icons
+- **Icons**: Lucide React
+- **Audio**: Web Audio API
+- **UI Components**: Radix UI primitives
+- **TypeScript**: Full type safety
 
 ## 🚀 Deployment
 

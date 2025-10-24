@@ -21,8 +21,6 @@ interface StoryboardProps {
 }
 
 export default function Storyboard({ story }: StoryboardProps) {
-  console.log('Storyboard rendering with story:', story.id, 'blocks:', story.blocks.length)
-  
   const [currentBlock, setCurrentBlock] = useState(0)
   const [isFocusMode, setIsFocusMode] = useState(false)
   // const [isBookmarked, setIsBookmarked] = useState(false)
@@ -84,7 +82,6 @@ export default function Storyboard({ story }: StoryboardProps) {
   }
 
   const nextBlock = () => {
-    console.log('nextBlock called, currentBlock:', currentBlock, 'total blocks:', story.blocks.length)
     if (currentBlock < story.blocks.length - 1) {
       transitionToBlock(currentBlock + 1, 'next')
     }
@@ -254,8 +251,6 @@ export default function Storyboard({ story }: StoryboardProps) {
     }
 
     if (autoplayMode !== 'disabled' && currentBlock < story.blocks.length - 1) {
-      console.log('Starting autoplay for block:', currentBlock, 'mode:', autoplayMode)
-      
       const getBlockReadTime = (block: StoryBlock): number => {
         let baseTime = 3000 // Default 3 seconds
         
